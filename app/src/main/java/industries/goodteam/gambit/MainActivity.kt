@@ -1,12 +1,17 @@
 package industries.goodteam.gambit
 
-import android.support.v7.app.AppCompatActivity
+import android.app.Activity
+import android.opengl.GLSurfaceView
 import android.os.Bundle
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    private lateinit var gLView: GLSurfaceView
+
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+
+        gLView = MyGLSurfaceView(this)
+        setContentView(gLView)
     }
 }
