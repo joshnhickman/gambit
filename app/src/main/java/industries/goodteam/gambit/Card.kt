@@ -15,17 +15,24 @@ val triangleCoords = floatArrayOf(
 class Card {
 
     private val vertexShaderCode =
-            "attribute vec4 vPosition;" +
-            "void main() {" +
-            "  gl_Position = vPosition;" +
-            "}"
+        """
+            uniform mat4 uMVPMatrix;
+            attribute vec4 vPosition;
+            void main() {
+                gl_Position = uMVPMatrix * vPosition;
+            }
+        """.trimIndent()
+
+    private var vPMatrixHandle: Int = 0
 
     private val fragmentShaderCode =
-            "precision mediump float;" +
-            "uniform vec4 vColor;" +
-            "void main() {" +
-            "  gl_FragColor = vColor;" +
-            "}"
+        """
+            precision mediump float;
+            uniform vec4 vColor;
+            void main() {
+                gl_FragColor = vColor;
+            }
+        """.trimIndent()
 
     fun loadShader(type: Int, shaderCode: String): Int {
         return GLES30.glCreateShader(type).also { shader ->
@@ -64,7 +71,8 @@ class Card {
     private val vertexCount: Int = triangleCoords.size / COORDS_PER_VERTEX
     private val vertexStride: Int = COORDS_PER_VERTEX * 4
 
-    fun draw() {
+    fun draw(mvpMatrix: FloatArray) {
+
         GLES30.glUseProgram(program)
         positionHandle = GLES30.glGetAttribLocation(program, "vPosition").also {
             GLES30.glEnableVertexAttribArray(it)
@@ -79,6 +87,9 @@ class Card {
             colorHandle = GLES30.glGetUniformLocation(program, "vColor").also { colorHandle ->
                 GLES30.glUniform4fv(colorHandle, 1, color, 0)
             }
+
+            vPMatrixHandle = GLES30.glGetUniformLocation(program, "uMVPMatrix")
+            GLES30.glUniformMatrix4fv(vPMatrixHandle, 1, false, mvpMatrix, 0)
             GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, vertexCount)
             GLES30.glDisableVertexAttribArray(it)
         }
