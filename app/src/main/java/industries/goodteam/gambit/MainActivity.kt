@@ -1,19 +1,22 @@
 package industries.goodteam.gambit
 
-import android.app.Activity
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 
 private const val TOUCH_SCALE_FACTOR = 180.0f / 320f
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var gLView: GLSurfaceView
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
 
         gLView = MyGLSurfaceView(this)
         setContentView(gLView)
