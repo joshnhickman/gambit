@@ -4,15 +4,37 @@ import android.opengl.GLES30
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
+import java.nio.ShortBuffer
 
 const val COORDS_PER_VERTEX = 3
-val triangleCoords = floatArrayOf(
-    0.0f, 0.622008469f, 0.0f,
-    -0.5f, -0.311004243f, 0.0f,
-    0.5f, -0.311004243f, 0.0f
+val squareCoords = floatArrayOf(
+    -0.5f, -0.5f, 0.0f,
+    0.5f, -0.5f, 0.0f,
+    -0.5f, 0.5f, 0.0f,
+    0.5f, 0.5f, 0.0f
 )
 
 class Card {
+
+    private val drawOrder = shortArrayOf(0, 1, 2, 0, 2, 3)
+
+    private val vertexBuffer: FloatBuffer =
+        ByteBuffer.allocateDirect(squareCoords.size * 4).run {
+            order(ByteOrder.nativeOrder())
+            asFloatBuffer().apply {
+                put(squareCoords)
+                position(0)
+            }
+        }
+
+    private val drawListBuffer: ShortBuffer =
+        ByteBuffer.allocateDirect(drawOrder.size * 2).run {
+            order(ByteOrder.nativeOrder())
+            asShortBuffer().apply {
+                put(drawOrder)
+                position(0)
+            }
+        }
 
     private val vertexShaderCode =
         """
@@ -56,19 +78,10 @@ class Card {
 
     val color = floatArrayOf(0.5f, 0.75f, 0.25f, 1.0f)
 
-    private var vertexBuffer: FloatBuffer =
-            ByteBuffer.allocateDirect(triangleCoords.size * 4).run {
-                order(ByteOrder.nativeOrder())
-                asFloatBuffer().apply {
-                    put(triangleCoords)
-                    position(0)
-                }
-            }
-
     private var positionHandle: Int = 0
     private var colorHandle: Int = 0
 
-    private val vertexCount: Int = triangleCoords.size / COORDS_PER_VERTEX
+    private val vertexCount: Int = squareCoords.size / COORDS_PER_VERTEX
     private val vertexStride: Int = COORDS_PER_VERTEX * 4
 
     fun draw(mvpMatrix: FloatArray) {
@@ -90,7 +103,7 @@ class Card {
 
             vPMatrixHandle = GLES30.glGetUniformLocation(program, "uMVPMatrix")
             GLES30.glUniformMatrix4fv(vPMatrixHandle, 1, false, mvpMatrix, 0)
-            GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, vertexCount)
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, vertexCount)
             GLES30.glDisableVertexAttribArray(it)
         }
     }
