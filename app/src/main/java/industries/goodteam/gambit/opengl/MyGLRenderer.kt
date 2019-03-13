@@ -1,9 +1,8 @@
-package industries.goodteam.gambit
+package industries.goodteam.gambit.opengl
 
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
-import android.os.SystemClock
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 

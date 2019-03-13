@@ -1,67 +1,109 @@
 package industries.goodteam.gambit
 
-import android.content.Context
 import android.content.pm.ActivityInfo
-import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.view.MotionEvent
-
-private const val TOUCH_SCALE_FACTOR = 180.0f / 320f
+import android.view.View
+import android.widget.Button
+import android.widget.ProgressBar
+import android.widget.TextView
+import org.jetbrains.anko.find
+import org.jetbrains.anko.sdk27.coroutines.onClick
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var gLView: GLSurfaceView
+    lateinit var player: Character
+    lateinit var enemy: Character
+
+    lateinit var enemyAction: Action
+
+    lateinit var enemyActionText: TextView
+
+    lateinit var attackButton: Button
+    lateinit var defendButton: Button
+    lateinit var utilityButton: Button
+
+    lateinit var playerHealthBar: ProgressBar
+    lateinit var enemyHealthBar: ProgressBar
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+        // set fullscreen options
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        supportActionBar?.hide()
 
-        gLView = MyGLSurfaceView(this)
-        setContentView(gLView)
+        setContentView(R.layout.combat)
+
+        player = Character("player")
+        enemy = Character("enemy")
+
+        enemyActionText = find<TextView>(R.id.enemyActionText)
+
+        attackButton = find<Button>(R.id.attackButton)
+        defendButton = find<Button>(R.id.defendButton)
+        utilityButton = find<Button>(R.id.utilityButton)
+
+        playerHealthBar = find<ProgressBar>(R.id.healthBar).apply {
+            max = player.health
+            progress = player.health
+        }
+        enemyHealthBar = find<ProgressBar>(R.id.enemyHealthBar).apply {
+            max = enemy.health
+            progress = enemy.health
+        }
+
+        defendButton.onClick {
+            act(Action.DEFEND)
+        }
+        attackButton.onClick {
+            act(Action.ATTACK)
+        }
+        utilityButton.onClick {
+            act(Action.UTILITY)
+        }
+
+        update(Action.random())
     }
 
-    class MyGLSurfaceView(context: Context) : GLSurfaceView(context) {
-
-        private val renderer: MyGLRenderer
-
-        private var previousX: Float = 0f
-        private var previousY: Float = 0f
-
-        init {
-            setEGLContextClientVersion(3)
-            renderer = MyGLRenderer()
-            setRenderer(renderer)
-
-            renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
+    private fun act(action: Action) {
+        if (action == Action.DEFEND) {
+            player.resilience += 1
+            defendButton.visibility = View.GONE
         }
+        if (enemyAction == Action.DEFEND) enemy.resilience += 1
 
-        override fun onTouchEvent(e: MotionEvent): Boolean {
-            val x: Float = e.x
-            val y: Float = e.y
-
-            when (e.action) {
-                MotionEvent.ACTION_MOVE -> {
-                    var dx: Float = x - previousX
-                    var dy: Float = y - previousY
-
-                    if (y > height / 2) {
-                        dx *= -1
-                    }
-
-                    if (x < width / 2) {
-                        dy *= -1
-                    }
-
-                    renderer.angle += (dx + dy) * TOUCH_SCALE_FACTOR
-                    requestRender()
-                }
-            }
-
-            previousX = x
-            previousY = y
-            return true
+        if (action == Action.ATTACK) {
+            enemy.health -= player.strength - enemy.resilience
+            attackButton.visibility = View.GONE
         }
+        if (enemyAction == Action.ATTACK) player.health -= enemy.strength - player.resilience
+
+        if (action == Action.UTILITY) {
+            player.utility()
+            utilityButton.visibility = View.GONE
+        }
+        if (enemyAction == Action.UTILITY) enemy.utility()
+
+        update(action)
+    }
+
+    private fun update(action: Action) {
+        playerHealthBar.apply {
+            max = player.vitality
+            progress = player.health
+        }
+        enemyHealthBar.apply {
+            max = enemy.vitality
+            progress = enemy.health
+        }
+        player.resilience = 0
+        enemy.resilience = 0
+        enemyAction = Action.not(action)
+        enemyActionText.text = enemyAction.name
+
+        if (action != Action.DEFEND) defendButton.visibility = View.VISIBLE
+        if (action != Action.ATTACK) attackButton.visibility = View.VISIBLE
+        if (action != Action.UTILITY) utilityButton.visibility = View.VISIBLE
     }
 }

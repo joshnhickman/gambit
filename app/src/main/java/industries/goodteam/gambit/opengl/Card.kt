@@ -1,4 +1,4 @@
-package industries.goodteam.gambit
+package industries.goodteam.gambit.opengl
 
 import android.opengl.GLES30
 import java.nio.ByteBuffer
