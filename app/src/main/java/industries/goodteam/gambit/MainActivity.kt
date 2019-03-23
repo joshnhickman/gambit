@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     val attack = Attack(0)
     val defend = Defend(1)
-    val stun = Stun(2)
+    val stun = Stun(3)
 
     lateinit var player: Entity
     lateinit var enemy: Entity
@@ -83,6 +83,10 @@ class MainActivity : AppCompatActivity() {
                         editStats("parmor", player.armor, "max shield") { player.armor = it }
                         editStats("preflexes", player.reflexes, "min shield (<armor)") { player.reflexes = it }
                         editStats("pconcentration", player.concentration, "stun duration") { player.concentration = it }
+
+                        editStats("pDefendCooldown", defend.cooldown, "") { defend.cooldown = it }
+                        editStats("pAttackCooldown", attack.cooldown, "") { attack.cooldown = it }
+                        editStats("pStunCooldown", stun.cooldown, "") { stun.cooldown = it }
 
                         editStats("evitality", enemy.vitality, "") { enemy.vitality = it }
                         editStats("ehealth", enemy.health, "") { enemy.health = it }
