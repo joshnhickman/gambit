@@ -63,6 +63,8 @@ class MainActivity : AppCompatActivity() {
                             linearLayout {
                                 textView(stat)
                                 editText {
+                                    padding = dip(3)
+                                    textSize = 14f
                                     inputType = InputType.TYPE_CLASS_NUMBER
                                     setText("${value}")
                                     afterTextChanged {
@@ -75,27 +77,27 @@ class MainActivity : AppCompatActivity() {
                         }
                         padding = dip(10)
 
-                        editStats("pvitality", player.vitality, "max health") { player.vitality = it }
-                        editStats("phealth", player.health, "current health") { player.health = it }
-                        editStats("pluck", player.luck, "not used") { player.luck = it }
-                        editStats("pstrength", player.strength, "max damage") { player.strength = it }
-                        editStats("paccuracy", player.accuracy, "min damage (<str)") { player.accuracy = it }
-                        editStats("parmor", player.armor, "max shield") { player.armor = it }
-                        editStats("preflexes", player.reflexes, "min shield (<armor)") { player.reflexes = it }
-                        editStats("pconcentration", player.concentration, "stun duration") { player.concentration = it }
+                        editStats("pVitality", player.vitality, "max health") { player.vitality = it }
+                        editStats("pHealth", player.health, "current health") { player.health = it }
+                        editStats("pLuck", player.luck, "not used") { player.luck = it }
+                        editStats("pStrength", player.strength, "max damage") { player.strength = it }
+                        editStats("pAccuracy", player.accuracy, "min damage (<str)") { player.accuracy = it }
+                        editStats("pArmor", player.armor, "max shield") { player.armor = it }
+                        editStats("pReflexes", player.reflexes, "min shield (<armor)") { player.reflexes = it }
+                        editStats("pConcentration", player.concentration, "stun duration") { player.concentration = it }
 
                         editStats("pDefendCooldown", defend.cooldown, "") { defend.cooldown = it }
                         editStats("pAttackCooldown", attack.cooldown, "") { attack.cooldown = it }
                         editStats("pStunCooldown", stun.cooldown, "") { stun.cooldown = it }
 
-                        editStats("evitality", enemy.vitality, "") { enemy.vitality = it }
-                        editStats("ehealth", enemy.health, "") { enemy.health = it }
-                        editStats("eluck", enemy.luck, "") { enemy.luck = it }
-                        editStats("estrength", enemy.strength, "") { enemy.strength = it }
-                        editStats("eaccuracy", enemy.accuracy, "") { enemy.accuracy = it }
-                        editStats("earmor", enemy.armor, "") { enemy.armor = it }
-                        editStats("ereflexes", enemy.reflexes, "") { enemy.reflexes = it }
-                        editStats("econcentration", enemy.concentration, "") { enemy.concentration = it }
+                        editStats("eVitality", enemy.vitality, "") { enemy.vitality = it }
+                        editStats("eHealth", enemy.health, "") { enemy.health = it }
+                        editStats("eLuck", enemy.luck, "") { enemy.luck = it }
+                        editStats("eStrength", enemy.strength, "") { enemy.strength = it }
+                        editStats("eAccuracy", enemy.accuracy, "") { enemy.accuracy = it }
+                        editStats("eArmor", enemy.armor, "") { enemy.armor = it }
+                        editStats("eReflexes", enemy.reflexes, "") { enemy.reflexes = it }
+                        editStats("eConcentration", enemy.concentration, "") { enemy.concentration = it }
                     }
                 }
                 yesButton { toast("saved") }
