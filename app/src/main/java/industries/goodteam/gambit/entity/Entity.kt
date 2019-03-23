@@ -5,10 +5,13 @@ import industries.goodteam.gambit.action.*
 
 open class Entity(
     var name: String,
+    var luck: Int = 1,
     var vitality: Int,
     var strength: Int,
+    var accuracy: Int = 1,
     var armor: Int,
-    var concentration: Int,
+    var reflexes: Int = 1,
+    var concentration: Int = 1,
     vararg var actions: Action
 ) {
 
@@ -40,8 +43,14 @@ open class Entity(
         intent.perform()
     }
 
-    open fun defend() {
-        shield = armor
+    open fun defend(): Int {
+        var defenceValue = actionValue(Defend()).random()
+        shield += defenceValue
+        return defenceValue
+    }
+
+    open fun attack(): Int {
+        return actionValue(Attack()).random()
     }
 
     open fun hit(damage: Int): Int {
@@ -61,13 +70,13 @@ open class Entity(
 
     open fun stunned(): Boolean = stunLeft > -1
 
-    fun actionValue(action: Action = intent): Int {
+    fun actionValue(action: Action = intent): IntRange {
         when(action) {
-            is Attack -> return strength
-            is Defend -> return armor
-            is Stun -> return concentration
-            is Wait -> return stunLeft
-            else -> return 0
+            is Attack -> return (if (accuracy < strength) accuracy else strength)..strength
+            is Defend -> return (if (reflexes < armor) reflexes else armor)..armor
+            is Stun -> return concentration..concentration
+            is Wait -> return stunLeft..stunLeft
+            else -> return 0..0
         }
     }
 
