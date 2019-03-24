@@ -15,6 +15,7 @@ import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.entity.Entity
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
+import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,7 +54,31 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.combat)
 
+        defendButton = find<Button>(R.id.defendButton).apply { onClick { act(defend) } }
+        defendText = find<TextView>(R.id.defendText)
+
+        attackButton = find<Button>(R.id.attackButton).apply { onClick { act(attack) } }
+        attackText = find<TextView>(R.id.attackText)
+
+        stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
+        stunText = find<TextView>(R.id.stunText)
+
+        playerHealthBar = find<ProgressBar>(R.id.healthBar)
+        enemyHealthBar = find<ProgressBar>(R.id.enemyHealthBar)
+
+        playerHealthText = find<TextView>(R.id.playerHealthText)
+        enemyHealthText = find<TextView>(R.id.enemyHealthText)
+
+        enemyNameText = find<TextView>(R.id.enemyNameText)
+        enemyActionText = find<TextView>(R.id.enemyActionText)
+
+        eventsText = find<TextView>(R.id.eventsText).apply { text = "last turn:" }
+
         init()
+
+        find<Button>(R.id.restartButton).onClick {
+            init()
+        }
 
         find<Button>(R.id.editButton).onClick {
             alert("Edit Stats") {
@@ -92,39 +117,17 @@ class MainActivity : AppCompatActivity() {
 
                         editStats("eVitality", enemy.vitality, "") { enemy.vitality = it }
                         editStats("eHealth", enemy.health, "") { enemy.health = it }
-                        editStats("eLuck", enemy.luck, "") { enemy.luck = it }
+                        editStats("eLuck", enemy.luck, "not used") { enemy.luck = it }
                         editStats("eStrength", enemy.strength, "") { enemy.strength = it }
                         editStats("eAccuracy", enemy.accuracy, "") { enemy.accuracy = it }
                         editStats("eArmor", enemy.armor, "") { enemy.armor = it }
                         editStats("eReflexes", enemy.reflexes, "") { enemy.reflexes = it }
-                        editStats("eConcentration", enemy.concentration, "") { enemy.concentration = it }
+                        editStats("eConcentration", enemy.concentration, ">1 will break") { enemy.concentration = it }
                     }
                 }
                 yesButton { toast("saved") }
             }.show()
         }
-
-        defendButton = find<Button>(R.id.defendButton).apply { onClick { act(defend) } }
-        defendText = find<TextView>(R.id.defendText)
-
-        attackButton = find<Button>(R.id.attackButton).apply { onClick { act(attack) } }
-        attackText = find<TextView>(R.id.attackText)
-
-        stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
-        stunText = find<TextView>(R.id.stunText)
-
-        playerHealthBar = find<ProgressBar>(R.id.healthBar)
-        enemyHealthBar = find<ProgressBar>(R.id.enemyHealthBar)
-
-        playerHealthText = find<TextView>(R.id.playerHealthText)
-        enemyHealthText = find<TextView>(R.id.enemyHealthText)
-
-        enemyNameText = find<TextView>(R.id.enemyNameText)
-        enemyActionText = find<TextView>(R.id.enemyActionText)
-
-        eventsText = find<TextView>(R.id.eventsText).apply { text = "last turn:" }
-
-        update()
     }
 
     private fun init() {
@@ -139,32 +142,63 @@ class MainActivity : AppCompatActivity() {
             concentration = 2,
             actions = *arrayOf(attack, defend, stun)
         )
-        enemy = Entity(
-            name = "enemy",
-            luck = 1,
-            vitality = 30,
-            strength = 5,
-            accuracy = 1,
-            armor = 5,
-            reflexes = 1,
-            actions = *arrayOf(Attack(0), Defend(1))
-        )
+        when (Random.nextInt(4)) {
+            1 -> enemy = Entity(
+                name = "defender",
+                luck = 1,
+                vitality = 30,
+                strength = 5,
+                accuracy = 1,
+                armor = 20,
+                reflexes = 5,
+                actions = *arrayOf(Attack(1, 1), Defend(0)))
+            2 -> enemy = Entity(
+                name = "stunner",
+                luck = 1,
+                vitality = 30,
+                strength = 5,
+                accuracy = 1,
+                armor = 5,
+                reflexes = 1,
+                concentration = 0,
+                actions = *arrayOf(Attack(0), Stun(4, 2)))
+            3 -> enemy = Entity(
+                name = "damager",
+                luck = 1,
+                vitality = 30,
+                strength = 20,
+                accuracy = 15,
+                armor = 5,
+                reflexes = 1,
+                actions = *arrayOf(Attack(4, 4), Defend(0)))
+            else -> enemy = Entity(
+                name = "generic",
+                luck = 1,
+                vitality = 30,
+                strength = 5,
+                accuracy = 1,
+                armor = 5,
+                reflexes = 1,
+                actions = *arrayOf(Attack(0), Defend(1)))
+        }
+        enemy.intend()
+        draw()
     }
 
     private fun act(action: Action) {
         var events = mutableListOf<String>()
         player.intend(action)
 
-        if (action is Stun) {
+        if (player.intent is Stun) {
             var duration = enemy.stun(player.concentration)
             events.add("you stunned ${enemy.name} for ${duration} turns")
         }
         if (enemy.intent is Stun) {
-            var duration = player.intend(Wait())
+            var duration = player.stun(enemy.concentration )
             events.add("${enemy.name} stunned you for ${duration} turns")
         }
 
-        if (action is Defend) {
+        if (player.intent is Defend) {
             var amt = player.defend()
             events.add("you prepare to defend ${amt} damage")
         }
@@ -172,7 +206,7 @@ class MainActivity : AppCompatActivity() {
             events.add("${enemy.name} prepares to defend ${enemy.defend()} damage")
         }
 
-        if (action is Attack) {
+        if (player.intent is Attack) {
             var damage = player.actionValue().random()
             var actualDamage = enemy.hit(damage)
             events.add("you attack for ${damage} damage")
@@ -185,7 +219,7 @@ class MainActivity : AppCompatActivity() {
             events.add("you take ${actualDamage} damage")
         }
 
-        if (action is Wait) {
+        if (player.intent is Wait) {
             events.add("you do nothing")
         }
         if (enemy.intent is Wait) {

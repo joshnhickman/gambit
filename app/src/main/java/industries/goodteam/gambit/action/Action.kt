@@ -2,10 +2,11 @@ package industries.goodteam.gambit.action
 
 abstract class Action(
     val name: String,
-    var cooldown: Int
+    var cooldown: Int,
+    var start: Int = -1
 ) {
 
-    private var left = -1
+    private var left = start
 
     fun update() {
         if (!ready()) left--
