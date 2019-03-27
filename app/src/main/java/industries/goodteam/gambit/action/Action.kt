@@ -12,6 +12,10 @@ abstract class Action(
         if (!ready()) left--
     }
 
+    fun refresh() {
+        left = -1
+    }
+
     fun perform() {
         if (!ready()) throw IllegalStateException("cooldown is not finished")
         left = cooldown

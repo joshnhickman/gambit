@@ -31,6 +31,12 @@ open class Entity(
         if (stunned()) stunLeft--
     }
 
+    open fun endCombat() {
+        for (action in actions) {
+            action.refresh()
+        }
+    }
+
     open fun intend(action: Action? = null) {
         intent = when {
             stunned() -> Wait()

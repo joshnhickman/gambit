@@ -7,10 +7,7 @@ import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.entity.Entity
 import org.jetbrains.anko.*
@@ -26,12 +23,15 @@ class MainActivity : AppCompatActivity() {
     lateinit var player: Entity
     lateinit var enemy: Entity
 
+    lateinit var enemies: List<Entity>
+
     lateinit var enemyNameText: TextView
     lateinit var enemyActionText: TextView
 
     lateinit var defendButton: Button
     lateinit var attackButton: Button
     lateinit var stunButton: Button
+    lateinit var waitButton: Button
 
     lateinit var attackText: TextView
     lateinit var defendText: TextView
@@ -45,6 +45,10 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var eventsText: TextView
 
+    var events = mutableListOf<String>()
+    var combat = -1
+    var round = 0
+
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -54,6 +58,7 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.combat)
 
+        // get handles to ui
         defendButton = find<Button>(R.id.defendButton).apply { onClick { act(defend) } }
         defendText = find<TextView>(R.id.defendText)
 
@@ -62,6 +67,8 @@ class MainActivity : AppCompatActivity() {
 
         stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
         stunText = find<TextView>(R.id.stunText)
+
+        waitButton = find<Button>(R.id.waitButton).apply { onClick { act(Wait()) } }
 
         playerHealthBar = find<ProgressBar>(R.id.healthBar)
         enemyHealthBar = find<ProgressBar>(R.id.enemyHealthBar)
@@ -72,12 +79,11 @@ class MainActivity : AppCompatActivity() {
         enemyNameText = find<TextView>(R.id.enemyNameText)
         enemyActionText = find<TextView>(R.id.enemyActionText)
 
-        eventsText = find<TextView>(R.id.eventsText).apply { text = "last turn:" }
+        eventsText = find<TextView>(R.id.eventsText)
 
-        init()
-
+        // set up buttons
         find<Button>(R.id.restartButton).onClick {
-            init()
+            newGame()
         }
 
         find<Button>(R.id.editButton).onClick {
@@ -128,9 +134,12 @@ class MainActivity : AppCompatActivity() {
                 yesButton { toast("saved") }
             }.show()
         }
+
+        newGame()
     }
 
-    private fun init() {
+    private fun newGame() {
+        events.clear()
         player = Entity(
             name = "player",
             luck = 1,
@@ -142,8 +151,9 @@ class MainActivity : AppCompatActivity() {
             concentration = 2,
             actions = *arrayOf(attack, defend, stun)
         )
-        when (Random.nextInt(4)) {
-            1 -> enemy = Entity(
+
+        enemies = mutableListOf(
+            Entity(
                 name = "defender",
                 luck = 1,
                 vitality = 30,
@@ -151,8 +161,8 @@ class MainActivity : AppCompatActivity() {
                 accuracy = 1,
                 armor = 20,
                 reflexes = 5,
-                actions = *arrayOf(Attack(1, 1), Defend(0)))
-            2 -> enemy = Entity(
+                actions = *arrayOf(Attack(1, 1), Defend(0))),
+            Entity(
                 name = "stunner",
                 luck = 1,
                 vitality = 30,
@@ -161,8 +171,8 @@ class MainActivity : AppCompatActivity() {
                 armor = 5,
                 reflexes = 1,
                 concentration = 0,
-                actions = *arrayOf(Attack(0), Stun(4, 2)))
-            3 -> enemy = Entity(
+                actions = *arrayOf(Attack(0), Stun(4, 2))),
+            Entity(
                 name = "damager",
                 luck = 1,
                 vitality = 30,
@@ -170,8 +180,8 @@ class MainActivity : AppCompatActivity() {
                 accuracy = 15,
                 armor = 5,
                 reflexes = 1,
-                actions = *arrayOf(Attack(4, 4), Defend(0)))
-            else -> enemy = Entity(
+                actions = *arrayOf(Attack(4, 4), Defend(0))),
+            Entity(
                 name = "generic",
                 luck = 1,
                 vitality = 30,
@@ -180,13 +190,41 @@ class MainActivity : AppCompatActivity() {
                 armor = 5,
                 reflexes = 1,
                 actions = *arrayOf(Attack(0), Defend(1)))
+        ).shuffled()
+
+        newCombat()
+    }
+
+    private fun newCombat() {
+        player.endCombat()
+
+        combat++
+
+        if (combat == enemies.size) {
+            longToast("WON GAME!!! Here we go again...")
+            newGame()
+        } else {
+
+            enemy = enemies[combat]
+            events.add("encountered enemy ${enemy.name}")
+            events.add("++ start combat ${combat} ++")
+
+            round = 0
+            newRound()
         }
+    }
+
+    private fun newRound() {
+        round++
+        events.add("-- start round ${round} --")
+
         enemy.intend()
+        events.add("${enemy.name} intends to ${enemy.intent.name} ${enemy.actionValue()}")
+
         draw()
     }
 
     private fun act(action: Action) {
-        var events = mutableListOf<String>()
         player.intend(action)
 
         if (player.intent is Stun) {
@@ -202,15 +240,13 @@ class MainActivity : AppCompatActivity() {
             var amt = player.defend()
             events.add("you prepare to defend ${amt} damage")
         }
-        if (enemy.intent is Defend) {
-            events.add("${enemy.name} prepares to defend ${enemy.defend()} damage")
-        }
+        if (enemy.intent is Defend) events.add("${enemy.name} prepares to defend ${enemy.defend()} damage")
 
         if (player.intent is Attack) {
             var damage = player.actionValue().random()
             var actualDamage = enemy.hit(damage)
             events.add("you attack for ${damage} damage")
-            events.add("enemy takes ${actualDamage} damage")
+            events.add("${enemy.name} takes ${actualDamage} damage")
         }
         if (enemy.intent is Attack) {
             var damage = enemy.actionValue().random()
@@ -219,36 +255,25 @@ class MainActivity : AppCompatActivity() {
             events.add("you take ${actualDamage} damage")
         }
 
-        if (player.intent is Wait) {
-            events.add("you do nothing")
-        }
-        if (enemy.intent is Wait) {
-            events.add("${enemy.name} does nothing")
-        }
-
-        eventsText.setText("last turn:\n${events.joinToString("\n")}")
+        if (player.intent is Wait) events.add("you do nothing")
+        if (enemy.intent is Wait) events.add("${enemy.name} does nothing")
 
         player.act()
         enemy.act()
 
         if (!enemy.alive()) {
-            longToast("WINNER")
-            init()
+            events.add("${enemy.name} dies")
+            events.add("++ end combat ${combat} ++")
+            longToast("WON COMBAT ${combat}")
+            newCombat()
         } else if (!player.alive()) {
-            longToast("LOSER")
-            init()
+            longToast("LOST COMBAT ${combat}")
+            newGame()
+        } else {
+            player.update()
+            enemy.update()
+            newRound()
         }
-
-        update()
-    }
-
-    private fun update() {
-        player.update()
-        enemy.update()
-
-        enemy.intend()
-
-        draw()
     }
 
     private fun draw() {
@@ -271,15 +296,19 @@ class MainActivity : AppCompatActivity() {
         playerHealthText.text = "${player.health} / ${player.vitality}"
         enemyHealthText.text = "${enemy.health} / ${enemy.vitality}"
 
+        eventsText.text = events.takeLast(10).joinToString("\n")
+
         if (player.stunned()) {
 //            TODO: how to advance turn?
             defendButton.visibility = View.GONE
             attackButton.visibility = View.GONE
             stunButton.visibility = View.GONE
+            waitButton.visibility = View.VISIBLE
         } else {
             defendButton.visibility = if (defend.ready()) View.VISIBLE else View.GONE
             attackButton.visibility = if (attack.ready()) View.VISIBLE else View.GONE
             stunButton.visibility = if (stun.ready()) View.VISIBLE else View.GONE
+            waitButton.visibility = View.GONE
         }
     }
 
