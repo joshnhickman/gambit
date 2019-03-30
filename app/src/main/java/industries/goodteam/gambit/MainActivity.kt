@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     val attack = Attack(0)
     val defend = Defend(1)
     val stun = Stun(3)
+    var steal = Steal(0)
 
     lateinit var player: Entity
     lateinit var enemy: Entity
@@ -31,11 +32,13 @@ class MainActivity : AppCompatActivity() {
     lateinit var defendButton: Button
     lateinit var attackButton: Button
     lateinit var stunButton: Button
+    lateinit var stealButton: Button
     lateinit var waitButton: Button
 
     lateinit var attackText: TextView
     lateinit var defendText: TextView
     lateinit var stunText: TextView
+    lateinit var stealText: TextView
 
     lateinit var playerHealthBar: ProgressBar
     lateinit var enemyHealthBar: ProgressBar
@@ -44,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var enemyHealthText: TextView
 
     lateinit var eventsText: TextView
+    lateinit var goldText: TextView
 
     var events = mutableListOf<String>()
     var combat = -1
@@ -68,6 +72,9 @@ class MainActivity : AppCompatActivity() {
         stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
         stunText = find<TextView>(R.id.stunText)
 
+        stealButton = find<Button>(R.id.stealButton).apply { onClick { act(steal) } }
+        stealText = find<TextView>(R.id.stealText)
+
         waitButton = find<Button>(R.id.waitButton).apply { onClick { act(Wait()) } }
 
         playerHealthBar = find<ProgressBar>(R.id.healthBar)
@@ -80,6 +87,7 @@ class MainActivity : AppCompatActivity() {
         enemyActionText = find<TextView>(R.id.enemyActionText)
 
         eventsText = find<TextView>(R.id.eventsText)
+        goldText = find<TextView>(R.id.goldText)
 
         // set up buttons
         find<Button>(R.id.restartButton).onClick {
@@ -139,6 +147,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newGame() {
+        combat = 0
         events.clear()
         player = Entity(
             name = "player",
@@ -149,7 +158,7 @@ class MainActivity : AppCompatActivity() {
             armor = 4,
             reflexes = 1,
             concentration = 2,
-            actions = *arrayOf(attack, defend, stun)
+            actions = *arrayOf(attack, defend, stun, steal)
         )
 
         enemies = mutableListOf(
@@ -201,10 +210,9 @@ class MainActivity : AppCompatActivity() {
         combat++
 
         if (combat == enemies.size) {
-            longToast("WON GAME!!! Here we go again...")
+            longToast("game over, restarting")
             newGame()
         } else {
-
             enemy = enemies[combat]
             events.add("encountered enemy ${enemy.name}")
             events.add("++ start combat ${combat} ++")
@@ -255,6 +263,12 @@ class MainActivity : AppCompatActivity() {
             events.add("you take ${actualDamage} damage")
         }
 
+        if (player.intent is Steal) {
+            var stolen = player.actionValue().random()
+            player.gold += stolen
+            events.add("you steal ${stolen} gold")
+        }
+
         if (player.intent is Wait) events.add("you do nothing")
         if (enemy.intent is Wait) events.add("${enemy.name} does nothing")
 
@@ -264,10 +278,10 @@ class MainActivity : AppCompatActivity() {
         if (!enemy.alive()) {
             events.add("${enemy.name} dies")
             events.add("++ end combat ${combat} ++")
-            longToast("WON COMBAT ${combat}")
+            alert("defeated ${enemy.name}") { yesButton {} }.show()
             newCombat()
         } else if (!player.alive()) {
-            longToast("LOST COMBAT ${combat}")
+            alert("${enemy.name} defeated you") { yesButton {} }.show()
             newGame()
         } else {
             player.update()
@@ -289,17 +303,28 @@ class MainActivity : AppCompatActivity() {
         enemyNameText.text = enemy.name
         enemyActionText.text = "${enemy.intent.name} ${enemy.actionValue()}"
 
-        defendText.text = "block ${player.actionValue(defend)} damage"
-        attackText.text = "deal ${player.actionValue(attack)} damage"
-        stunText.text = "stun for ${player.actionValue(stun)} turn(s)"
+        defendText.text = """*block ${player.actionValue(defend)} damage
+            |*${defend.cooldown} turn cooldown
+        """.trimMargin()
+        attackText.text = """*deal ${player.actionValue(attack)} damage
+            |*damage increases with consecutive attacks
+            |*${attack.cooldown} turn cooldown
+        """.trimMargin()
+        stunText.text = """*stun for ${player.actionValue(stun)} turn(s)
+            |*${stun.cooldown} turn cooldown
+        """.trimMargin()
+        stealText.text = """*steal ${player.actionValue(steal)} gold
+            |*${steal.cooldown} turn cooldown
+        """.trimMargin()
 
         playerHealthText.text = "${player.health} / ${player.vitality}"
         enemyHealthText.text = "${enemy.health} / ${enemy.vitality}"
 
+        goldText.text = "GOLD: ${player.gold}"
+
         eventsText.text = events.takeLast(10).joinToString("\n")
 
         if (player.stunned()) {
-//            TODO: how to advance turn?
             defendButton.visibility = View.GONE
             attackButton.visibility = View.GONE
             stunButton.visibility = View.GONE

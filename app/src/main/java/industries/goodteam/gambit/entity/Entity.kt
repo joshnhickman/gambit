@@ -18,7 +18,10 @@ open class Entity(
     var health = vitality
     var shield = 0
 
+    var gold = 0
+
     var intent = actions[0]
+    var attackMultiplier = 1
 
     private var stunLeft = -1
 
@@ -47,6 +50,9 @@ open class Entity(
 
     open fun act(action: Action = intent) {
         intent.perform()
+        if (action is Attack) {
+            if (attackMultiplier < 3) attackMultiplier++
+        } else attackMultiplier = 1
     }
 
     open fun defend(): Int {
@@ -78,9 +84,10 @@ open class Entity(
 
     fun actionValue(action: Action = intent): IntRange {
         when(action) {
-            is Attack -> return (if (accuracy < strength) accuracy else strength)..strength
+            is Attack -> return (if (accuracy < strength) accuracy*attackMultiplier else strength*attackMultiplier)..strength*attackMultiplier
             is Defend -> return (if (reflexes < armor) reflexes else armor)..armor
             is Stun -> return concentration..concentration
+            is Steal -> return accuracy*10..reflexes*10
             is Wait -> return stunLeft..stunLeft
             else -> return 0..0
         }
