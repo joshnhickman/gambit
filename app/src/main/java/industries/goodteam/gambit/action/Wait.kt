@@ -1,4 +1,3 @@
 package industries.goodteam.gambit.action
 
-class Wait : Action(name = "Wait", cooldown = 0) {
-}
+class Wait : Action(name = "Wait", cooldown = 0)

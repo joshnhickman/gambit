@@ -56,13 +56,9 @@ open class Entity(
     }
 
     open fun defend(): Int {
-        var defenceValue = actionValue(Defend()).random()
+        val defenceValue = actionValue(Defend()).random()
         shield += defenceValue
         return defenceValue
-    }
-
-    open fun attack(): Int {
-        return actionValue(Attack()).random()
     }
 
     open fun hit(damage: Int): Int {
@@ -83,13 +79,13 @@ open class Entity(
     open fun stunned(): Boolean = stunLeft > -1
 
     fun actionValue(action: Action = intent): IntRange {
-        when(action) {
-            is Attack -> return (if (accuracy < strength) accuracy*attackMultiplier else strength*attackMultiplier)..strength*attackMultiplier
-            is Defend -> return (if (reflexes < armor) reflexes else armor)..armor
-            is Stun -> return concentration..concentration
-            is Steal -> return accuracy*10..reflexes*10
-            is Wait -> return stunLeft..stunLeft
-            else -> return 0..0
+        return when(action) {
+            is Attack -> (if (accuracy < strength) accuracy*attackMultiplier else strength*attackMultiplier)..strength*attackMultiplier
+            is Defend -> (if (reflexes < armor) reflexes else armor)..armor
+            is Stun -> concentration..concentration
+            is Steal -> accuracy*10..reflexes*10
+            is Wait -> stunLeft..stunLeft
+            else -> 0..0
         }
     }
 

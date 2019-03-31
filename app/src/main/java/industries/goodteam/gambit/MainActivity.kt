@@ -7,51 +7,53 @@ import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ProgressBar
+import android.widget.TextView
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.entity.Entity
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
-import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
-    val attack = Attack(0)
-    val defend = Defend(1)
-    val stun = Stun(3)
-    var steal = Steal(0)
+    private val attack = Attack(0)
+    private val defend = Defend(1)
+    private val stun = Stun(3)
+    private var steal = Steal(0)
 
-    lateinit var player: Entity
-    lateinit var enemy: Entity
+    private lateinit var player: Entity
+    private lateinit var enemy: Entity
 
-    lateinit var enemies: List<Entity>
+    private lateinit var enemies: List<Entity>
 
-    lateinit var enemyNameText: TextView
-    lateinit var enemyActionText: TextView
+    private lateinit var enemyNameText: TextView
+    private lateinit var enemyActionText: TextView
 
-    lateinit var defendButton: Button
-    lateinit var attackButton: Button
-    lateinit var stunButton: Button
-    lateinit var stealButton: Button
-    lateinit var waitButton: Button
+    private lateinit var defendButton: Button
+    private lateinit var attackButton: Button
+    private lateinit var stunButton: Button
+    private lateinit var stealButton: Button
+    private lateinit var waitButton: Button
 
-    lateinit var attackText: TextView
-    lateinit var defendText: TextView
-    lateinit var stunText: TextView
-    lateinit var stealText: TextView
+    private lateinit var attackText: TextView
+    private lateinit var defendText: TextView
+    private lateinit var stunText: TextView
+    private lateinit var stealText: TextView
 
-    lateinit var playerHealthBar: ProgressBar
-    lateinit var enemyHealthBar: ProgressBar
+    private lateinit var playerHealthBar: ProgressBar
+    private lateinit var enemyHealthBar: ProgressBar
 
-    lateinit var playerHealthText: TextView
-    lateinit var enemyHealthText: TextView
+    private lateinit var playerHealthText: TextView
+    private lateinit var enemyHealthText: TextView
 
-    lateinit var eventsText: TextView
-    lateinit var goldText: TextView
+    private lateinit var eventsText: TextView
+    private lateinit var goldText: TextView
 
-    var events = mutableListOf<String>()
-    var combat = -1
-    var round = 0
+    private var events = mutableListOf<String>()
+    private var combat = -1
+    private var round = 0
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,30 +66,30 @@ class MainActivity : AppCompatActivity() {
 
         // get handles to ui
         defendButton = find<Button>(R.id.defendButton).apply { onClick { act(defend) } }
-        defendText = find<TextView>(R.id.defendText)
+        defendText = find(R.id.defendText)
 
         attackButton = find<Button>(R.id.attackButton).apply { onClick { act(attack) } }
-        attackText = find<TextView>(R.id.attackText)
+        attackText = find(R.id.attackText)
 
         stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
-        stunText = find<TextView>(R.id.stunText)
+        stunText = find(R.id.stunText)
 
         stealButton = find<Button>(R.id.stealButton).apply { onClick { act(steal) } }
-        stealText = find<TextView>(R.id.stealText)
+        stealText = find(R.id.stealText)
 
         waitButton = find<Button>(R.id.waitButton).apply { onClick { act(Wait()) } }
 
-        playerHealthBar = find<ProgressBar>(R.id.healthBar)
-        enemyHealthBar = find<ProgressBar>(R.id.enemyHealthBar)
+        playerHealthBar = find(R.id.healthBar)
+        enemyHealthBar = find(R.id.enemyHealthBar)
 
-        playerHealthText = find<TextView>(R.id.playerHealthText)
-        enemyHealthText = find<TextView>(R.id.enemyHealthText)
+        playerHealthText = find(R.id.playerHealthText)
+        enemyHealthText = find(R.id.enemyHealthText)
 
-        enemyNameText = find<TextView>(R.id.enemyNameText)
-        enemyActionText = find<TextView>(R.id.enemyActionText)
+        enemyNameText = find(R.id.enemyNameText)
+        enemyActionText = find(R.id.enemyActionText)
 
-        eventsText = find<TextView>(R.id.eventsText)
-        goldText = find<TextView>(R.id.goldText)
+        eventsText = find(R.id.eventsText)
+        goldText = find(R.id.goldText)
 
         // set up buttons
         find<Button>(R.id.restartButton).onClick {
@@ -105,7 +107,7 @@ class MainActivity : AppCompatActivity() {
                                     padding = dip(3)
                                     textSize = 14f
                                     inputType = InputType.TYPE_CLASS_NUMBER
-                                    setText("${value}")
+                                    setText("$value")
                                     afterTextChanged {
                                         function(it.getIntWithBlank())
                                         draw()
@@ -136,7 +138,7 @@ class MainActivity : AppCompatActivity() {
                         editStats("eAccuracy", enemy.accuracy, "") { enemy.accuracy = it }
                         editStats("eArmor", enemy.armor, "") { enemy.armor = it }
                         editStats("eReflexes", enemy.reflexes, "") { enemy.reflexes = it }
-                        editStats("eConcentration", enemy.concentration, ">1 will break") { enemy.concentration = it }
+                        editStats("eConcentration", enemy.concentration, "") { enemy.concentration = it }
                     }
                 }
                 yesButton { toast("saved") }
@@ -215,7 +217,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             enemy = enemies[combat]
             events.add("encountered enemy ${enemy.name}")
-            events.add("++ start combat ${combat} ++")
+            events.add("++ start combat $combat ++")
 
             round = 0
             newRound()
@@ -224,7 +226,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun newRound() {
         round++
-        events.add("-- start round ${round} --")
+        events.add("-- start round $round --")
 
         enemy.intend()
         events.add("${enemy.name} intends to ${enemy.intent.name} ${enemy.actionValue()}")
@@ -236,37 +238,37 @@ class MainActivity : AppCompatActivity() {
         player.intend(action)
 
         if (player.intent is Stun) {
-            var duration = enemy.stun(player.concentration)
-            events.add("you stunned ${enemy.name} for ${duration} turns")
+            val duration = enemy.stun(player.concentration)
+            events.add("you stunned ${enemy.name} for $duration turns")
         }
         if (enemy.intent is Stun) {
-            var duration = player.stun(enemy.concentration )
-            events.add("${enemy.name} stunned you for ${duration} turns")
+            val duration = player.stun(enemy.concentration )
+            events.add("${enemy.name} stunned you for $duration turns")
         }
 
         if (player.intent is Defend) {
-            var amt = player.defend()
-            events.add("you prepare to defend ${amt} damage")
+            val amt = player.defend()
+            events.add("you prepare to defend $amt damage")
         }
         if (enemy.intent is Defend) events.add("${enemy.name} prepares to defend ${enemy.defend()} damage")
 
         if (player.intent is Attack) {
-            var damage = player.actionValue().random()
-            var actualDamage = enemy.hit(damage)
-            events.add("you attack for ${damage} damage")
-            events.add("${enemy.name} takes ${actualDamage} damage")
+            val damage = player.actionValue().random()
+            val actualDamage = enemy.hit(damage)
+            events.add("you attack for $damage damage")
+            events.add("${enemy.name} takes $actualDamage damage")
         }
         if (enemy.intent is Attack) {
-            var damage = enemy.actionValue().random()
-            var actualDamage = player.hit(damage)
-            events.add("${enemy.name} attacks for ${damage} damage")
-            events.add("you take ${actualDamage} damage")
+            val damage = enemy.actionValue().random()
+            val actualDamage = player.hit(damage)
+            events.add("${enemy.name} attacks for $damage damage")
+            events.add("you take $actualDamage damage")
         }
 
         if (player.intent is Steal) {
-            var stolen = player.actionValue().random()
+            val stolen = player.actionValue().random()
             player.gold += stolen
-            events.add("you steal ${stolen} gold")
+            events.add("you steal $stolen gold")
         }
 
         if (player.intent is Wait) events.add("you do nothing")
@@ -277,7 +279,7 @@ class MainActivity : AppCompatActivity() {
 
         if (!enemy.alive()) {
             events.add("${enemy.name} dies")
-            events.add("++ end combat ${combat} ++")
+            events.add("++ end combat $combat ++")
             alert("defeated ${enemy.name}") { yesButton {} }.show()
             newCombat()
         } else if (!player.alive()) {
@@ -348,10 +350,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun String.getIntWithBlank(): Int {
-        try {
-            return this.toInt()
+        return try {
+            this.toInt()
         } catch (e: NumberFormatException) {
-            return 0
+            0
         }
     }
 }
