@@ -56,8 +56,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var goldText: TextView
 
     private var events = mutableListOf<String>()
+    private var level = 0
     private var combat = -1
     private var round = 0
+
+    private var defeated = mutableListOf<Entity>()
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -155,8 +158,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun newGame() {
         log.info("start new game")
-        combat = 0
+        level = 0
         events.clear()
+        defeated.clear()
         player = Player(
             luck = 1,
             vitality = 40,
@@ -171,37 +175,62 @@ class MainActivity : AppCompatActivity() {
             steal = steal
         )
 
+        newLevel()
+    }
+
+    private fun newLevel() {
+        combat = 0
         enemies = mutableListOf(
+            Entity(
+                name = "generic",
+                luck = 1,
+                vitality = 30 + 5 * level,
+                strength = 5 + level,
+                accuracy = 1 + level,
+                armor = 5 + level,
+                reflexes = 1 + level,
+                concentration = 0 + level,
+                actions = *arrayOf(Attack(0), Defend(1))
+            ),
             Entity(
                 name = "defender",
                 luck = 1,
-                vitality = 30,
-                strength = 5,
-                accuracy = 1,
-                armor = 20,
-                reflexes = 5,
+                vitality = 30 + 5 * level,
+                strength = 5 + level,
+                accuracy = 1 + level,
+                armor = 20 + level,
+                reflexes = 5 + level,
                 actions = *arrayOf(Attack(1, 1), Defend(0))),
             Entity(
                 name = "stunner",
                 luck = 1,
-                vitality = 30,
-                strength = 5,
-                accuracy = 1,
-                armor = 5,
-                reflexes = 1,
-                concentration = 0,
+                vitality = 30 + 5 * level,
+                strength = 5 + level,
+                accuracy = 1 + level,
+                armor = 5 + level,
+                reflexes = 1 + level,
+                concentration = 0 + level,
                 actions = *arrayOf(Attack(0), Stun(4, 2))),
             Entity(
                 name = "damager",
-                luck = 1,
-                vitality = 30,
-                strength = 20,
-                accuracy = 15,
-                armor = 5,
-                reflexes = 1,
+                luck = 1 + level,
+                vitality = 30 + 5 * level,
+                strength = 20 + level,
+                accuracy = 15 + level,
+                armor = 5 + level,
+                reflexes = 1 + level,
                 actions = *arrayOf(Attack(4, 4), Defend(0))),
-            Entity(name = "generic", actions = *arrayOf(Attack(0), Defend(1))),
-            Entity(name = "weakener", actions = *arrayOf(Attack(0), Defend(1), Modify(Effect(StatType.STRENGTH, -2, 2), 2)))
+            Entity(
+                name = "weakener",
+                luck = 1,
+                vitality = 30 + level,
+                strength = 5 + level,
+                accuracy = 1 + level,
+                armor = 5 + level,
+                reflexes = 1 + level,
+                concentration = 0 + level,
+                actions = *arrayOf(Attack(0), Defend(1), Modify(Effect(StatType.STRENGTH, -2 - level, 2), 2))
+            )
         ).shuffled()
 
         newCombat()
@@ -214,8 +243,9 @@ class MainActivity : AppCompatActivity() {
         combat++
 
         if (combat == enemies.size + 1) {
-            longToast("game over, restarting")
-            newGame()
+            longToast("level $level complete, advancing")
+            level++
+            newLevel()
         } else {
             enemy = enemies[combat - 1]
             events.add("encountered enemy ${enemy.name}")
@@ -252,7 +282,7 @@ class MainActivity : AppCompatActivity() {
 
         if (player.intent is Modify) {}
         if (enemy.intent is Modify) {
-            var effect = (enemy.intent as Modify).effect.apply()
+            val effect = (enemy.intent as Modify).effect.apply()
             player.affect(effect)
             events.add("${enemy.name} modified your ${effect.targetStat} by ${effect.value}")
         }
@@ -291,10 +321,16 @@ class MainActivity : AppCompatActivity() {
         if (!enemy.alive()) {
             events.add("${enemy.name} dies")
             events.add("++ end combat $combat ++")
+            defeated.add(enemy)
             alert("defeated ${enemy.name}") { yesButton {} }.show()
             newCombat()
         } else if (!player.alive()) {
-            alert("${enemy.name} defeated you") { yesButton {} }.show()
+            alert("""
+                ${enemy.name} defeated you
+                stole ${player.gold} gold
+                defeated ${defeated.size} enemies:
+                ${defeated.joinToString(",") { it.name }}
+            """.trimIndent()) { yesButton {} }.show()
             newGame()
         } else {
             player.update()
