@@ -50,9 +50,6 @@ open class Entity(
 
     open fun act(action: Action = intent) {
         intent.perform()
-        if (action is Attack) {
-            if (attackMultiplier < 3) attackMultiplier++
-        } else attackMultiplier = 1
     }
 
     open fun defend(): Int {

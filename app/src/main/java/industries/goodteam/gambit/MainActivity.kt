@@ -13,6 +13,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.entity.Entity
+import industries.goodteam.gambit.entity.Player
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
 
@@ -23,7 +24,7 @@ class MainActivity : AppCompatActivity() {
     private val stun = Stun(3)
     private var steal = Steal(0)
 
-    private lateinit var player: Entity
+    private lateinit var player: Player
     private lateinit var enemy: Entity
 
     private lateinit var enemies: List<Entity>
@@ -151,8 +152,7 @@ class MainActivity : AppCompatActivity() {
     private fun newGame() {
         combat = 0
         events.clear()
-        player = Entity(
-            name = "player",
+        player = Player(
             luck = 1,
             vitality = 40,
             strength = 4,
@@ -160,7 +160,10 @@ class MainActivity : AppCompatActivity() {
             armor = 4,
             reflexes = 1,
             concentration = 2,
-            actions = *arrayOf(attack, defend, stun, steal)
+            attack = attack,
+            defend = defend,
+            stun = stun,
+            steal = steal
         )
 
         enemies = mutableListOf(
