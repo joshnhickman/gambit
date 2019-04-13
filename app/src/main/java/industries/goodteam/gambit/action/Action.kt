@@ -8,7 +8,7 @@ abstract class Action(
 
     private var left = start
 
-    fun update() {
+    open fun update() {
         if (!ready()) left--
     }
 
@@ -16,7 +16,7 @@ abstract class Action(
         left = -1
     }
 
-    fun perform() {
+    open fun perform() {
         if (!ready()) throw IllegalStateException("cooldown is not finished")
         left = cooldown
     }

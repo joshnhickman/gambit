@@ -14,7 +14,7 @@ class Player(
     val defend: Defend,
     val stun: Stun,
     val steal: Steal
-): Entity(
+) : Entity(
     name = "player",
     luck = luck,
     vitality = vitality,

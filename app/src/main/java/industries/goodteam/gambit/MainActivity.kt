@@ -12,12 +12,15 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import industries.goodteam.gambit.action.*
+import industries.goodteam.gambit.effect.Effect
 import industries.goodteam.gambit.entity.Entity
 import industries.goodteam.gambit.entity.Player
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
 
 class MainActivity : AppCompatActivity() {
+
+    private val log = AnkoLogger(this.javaClass)
 
     private val attack = Attack(0)
     private val defend = Defend(1)
@@ -94,6 +97,7 @@ class MainActivity : AppCompatActivity() {
 
         // set up buttons
         find<Button>(R.id.restartButton).onClick {
+            log.info("player requested new game")
             newGame()
         }
 
@@ -150,6 +154,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newGame() {
+        log.info("start new game")
         combat = 0
         events.clear()
         player = Player(
@@ -195,30 +200,24 @@ class MainActivity : AppCompatActivity() {
                 armor = 5,
                 reflexes = 1,
                 actions = *arrayOf(Attack(4, 4), Defend(0))),
-            Entity(
-                name = "generic",
-                luck = 1,
-                vitality = 30,
-                strength = 5,
-                accuracy = 1,
-                armor = 5,
-                reflexes = 1,
-                actions = *arrayOf(Attack(0), Defend(1)))
+            Entity(name = "generic", actions = *arrayOf(Attack(0), Defend(1))),
+            Entity(name = "weakener", actions = *arrayOf(Attack(0), Defend(1), Modify(Effect(StatType.STRENGTH, -2, 2), 2)))
         ).shuffled()
 
         newCombat()
     }
 
     private fun newCombat() {
+        log.info("start new combat")
         player.endCombat()
 
         combat++
 
-        if (combat == enemies.size) {
+        if (combat == enemies.size + 1) {
             longToast("game over, restarting")
             newGame()
         } else {
-            enemy = enemies[combat]
+            enemy = enemies[combat - 1]
             events.add("encountered enemy ${enemy.name}")
             events.add("++ start combat $combat ++")
 
@@ -228,6 +227,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newRound() {
+        log.info("start new round")
         round++
         events.add("-- start round $round --")
 
@@ -238,6 +238,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun act(action: Action) {
+        log.info("act $action")
         player.intend(action)
 
         if (player.intent is Stun) {
@@ -247,6 +248,13 @@ class MainActivity : AppCompatActivity() {
         if (enemy.intent is Stun) {
             val duration = player.stun(enemy.concentration )
             events.add("${enemy.name} stunned you for $duration turns")
+        }
+
+        if (player.intent is Modify) {}
+        if (enemy.intent is Modify) {
+            var effect = (enemy.intent as Modify).effect.apply()
+            player.affect(effect)
+            events.add("${enemy.name} modified your ${effect.targetStat} by ${effect.value}")
         }
 
         if (player.intent is Defend) {
