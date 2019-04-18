@@ -189,6 +189,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newLevel() {
+        if (level > 0) {
+            val cost = level * 50
+            alert("heal ${player.vitality / 2} health for $cost gold?") {
+                if (player.gold > cost) {
+                    yesButton {
+                        player.gold -= level * 50
+                        player.health += player.vitality / 2
+                    }
+                }
+                noButton {}
+            }.show()
+            draw()
+        }
         combat = 0
         enemies = mutableListOf(
             Entity(
