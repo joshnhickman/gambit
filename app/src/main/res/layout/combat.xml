@@ -309,10 +309,11 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="100"
+        android:gravity="center|center_horizontal"
+        android:text="50"
         android:textAlignment="center"
         android:textColor="#FF0000"
-        android:textSize="100sp"
+        android:textSize="150sp"
         android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/healthBar"
         app:layout_constraintEnd_toEndOf="parent"
@@ -327,14 +328,15 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
+        android:gravity="center|center_horizontal"
         android:text="50"
         android:textAlignment="center"
         android:textColor="#FF0000"
-        android:textSize="100sp"
+        android:textSize="150sp"
         android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/playerDamage"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/enemyNameText" />
+        app:layout_constraintTop_toBottomOf="@+id/enemyHealthBar" />
 
 </android.support.constraint.ConstraintLayout>
