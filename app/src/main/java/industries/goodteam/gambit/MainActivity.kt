@@ -15,8 +15,12 @@ import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.effect.Effect
 import industries.goodteam.gambit.entity.Entity
 import industries.goodteam.gambit.entity.Player
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
+import java.lang.Thread.sleep
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,6 +52,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var playerHealthBar: ProgressBar
     private lateinit var enemyHealthBar: ProgressBar
+
+    private lateinit var playerDamageText: TextView
+    private lateinit var enemyDamageText: TextView
 
     private lateinit var playerHealthText: TextView
     private lateinit var enemyHealthText: TextView
@@ -91,6 +98,9 @@ class MainActivity : AppCompatActivity() {
 
         playerHealthText = find(R.id.playerHealthText)
         enemyHealthText = find(R.id.enemyHealthText)
+
+        playerDamageText = find<TextView>(R.id.playerDamage).apply { alpha = 0f }
+        enemyDamageText = find<TextView>(R.id.enemyDamage).apply { alpha = 0f }
 
         enemyNameText = find(R.id.enemyNameText)
         enemyActionText = find(R.id.enemyActionText)
@@ -298,12 +308,28 @@ class MainActivity : AppCompatActivity() {
             val actualDamage = enemy.hit(damage)
             events.add("you attack for $damage damage")
             events.add("${enemy.name} takes $actualDamage damage")
+            GlobalScope.launch {
+                enemyDamageText.text = "$actualDamage"
+                enemyDamageText.alpha = 1.0f
+                while(enemyDamageText.alpha > 0) {
+                    runOnUiThread { enemyDamageText.alpha -= 0.01f }
+                    delay(16)
+                }
+            }
         }
         if (enemy.intent is Attack) {
             val damage = enemy.actionValue().random()
             val actualDamage = player.hit(damage)
             events.add("${enemy.name} attacks for $damage damage")
             events.add("you take $actualDamage damage")
+            GlobalScope.launch {
+                playerDamageText.text = "$actualDamage"
+                playerDamageText.alpha = 1.0f
+                while(playerDamageText.alpha > 0) {
+                    runOnUiThread { playerDamageText.alpha -= 0.01f }
+                    delay(16)
+                }
+            }
         }
 
         if (player.intent is Steal) {
