@@ -62,7 +62,7 @@
         android:background="@drawable/border"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/utilityCard"
+        app:layout_constraintEnd_toStartOf="@+id/stunCard"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/defendCard"
         app:layout_constraintTop_toTopOf="@+id/attackGuideline"
@@ -102,8 +102,15 @@
 
     </LinearLayout>
 
+    <android.support.constraint.Guideline
+        android:id="@+id/stunGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent=".7" />
+
     <LinearLayout
-        android:id="@+id/utilityCard"
+        android:id="@+id/stunCard"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="2dp"
@@ -116,14 +123,32 @@
         app:layout_constraintEnd_toStartOf="@+id/stealCard"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/attackCard"
-        app:layout_constraintTop_toTopOf="@+id/bottomGuideline"
+        app:layout_constraintTop_toTopOf="@+id/stunGuideline"
         app:layout_constraintVertical_bias="0.0">
 
         <Button
-            android:id="@+id/utilityButton"
+            android:id="@+id/stunButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Stun" />
+            android:text="Stun"
+            tools:visibility="gone" />
+
+        <TextView
+            android:id="@+id/stunCooldownText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="^"
+            android:textAlignment="center"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/stunNameText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="STUN"
+            android:textAlignment="center"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/stunText"
@@ -147,7 +172,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/utilityCard"
+        app:layout_constraintStart_toEndOf="@+id/stunCard"
         app:layout_constraintTop_toTopOf="@+id/bottomGuideline"
         app:layout_constraintVertical_bias="0.0">
 

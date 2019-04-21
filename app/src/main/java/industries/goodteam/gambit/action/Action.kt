@@ -6,7 +6,7 @@ abstract class Action(
     var start: Int = -1
 ) {
 
-    private var left = start
+    var left = start
 
     open fun update() {
         if (!ready()) left--

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.graphics.Point
 import android.os.Bundle
+import android.support.constraint.ConstraintLayout
 import android.support.constraint.Guideline
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
@@ -17,11 +18,11 @@ import industries.goodteam.gambit.effect.Effect
 import industries.goodteam.gambit.entity.Entity
 import industries.goodteam.gambit.entity.Player
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
-import org.jetbrains.anko.sdk27.coroutines.onTouch
 
 class MainActivity : AppCompatActivity() {
 
@@ -63,7 +64,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var eventsText: TextView
     private lateinit var goldText: TextView
 
-    private lateinit var guideline: Guideline
+    private lateinit var attackGuideline: Guideline
+    private lateinit var stunGuideline: Guideline
+
+    private var attackSwiping = false
+    private var stunSwiping = false
 
     private var events = mutableListOf<String>()
     private var level = 0
@@ -71,6 +76,9 @@ class MainActivity : AppCompatActivity() {
     private var round = 0
 
     private var defeated = mutableListOf<Entity>()
+
+    private var attackAnimation: Job? = null
+    private var stunAnimation: Job? = null
 
     // TODO: implement performClick for onTouchListeners and disable suppression
     @SuppressLint("ClickableViewAccessibility")
@@ -90,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         attackButton = find<Button>(R.id.attackButton).apply { onClick { act(attack) } }
         attackText = find(R.id.attackText)
 
-        stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
+        stunButton = find<Button>(R.id.stunButton).apply { onClick { act(stun) } }
         stunText = find(R.id.stunText)
 
         stealButton = find<Button>(R.id.stealButton).apply { onClick { act(steal) } }
@@ -113,36 +121,68 @@ class MainActivity : AppCompatActivity() {
         eventsText = find(R.id.eventsText)
         goldText = find(R.id.goldText)
 
-        guideline = find(R.id.attackGuideline)
+        attackGuideline = find(R.id.attackGuideline)
+        stunGuideline = find(R.id.stunGuideline)
 
         // get full y of display
         var size = Point()
         windowManager.defaultDisplay.getSize(size)
         val windowY = size.y
 
-        var lastY = 0f
-        var lastPercent = 0.7f
+        // TODO: make this abstract
+        var attackLastY = 0f
+//        var attackLastPercent = 0.7f
         find<LinearLayout>(R.id.attackCard).setOnTouchListener { _, event ->
+            val lastPercent = (attackGuideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
             when(event.action) {
+                MotionEvent.ACTION_DOWN -> attackSwiping = true
                 MotionEvent.ACTION_MOVE -> {
-                    lastPercent -= (lastY - event.rawY) / windowY
-                    guideline.setGuidelinePercent(lastPercent)
+                    attackSwiping = true
+//                    lastPercent -= (attackLastY - event.rawY) / windowY
+                    attackGuideline.setGuidelinePercent(lastPercent - (attackLastY - event.rawY) / windowY)
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (lastPercent < 0.5f) {
-                        act(attack)
-                    }
-                    GlobalScope.launch {
-                        while(lastPercent < 0.7f) {
-                            lastPercent += 0.05f
-                            if (lastPercent > 0.7f) lastPercent = 0.7f
-                            runOnUiThread { guideline.setGuidelinePercent(lastPercent) }
-                            delay(16)
-                        }
-                    }
+//                    GlobalScope.launch {
+//                        while(attackLastPercent < 0.7f) {
+//                            attackLastPercent += 0.05f
+//                            if (attackLastPercent > 0.7f) attackLastPercent = 0.7f
+//                            runOnUiThread { attackGuideline.setGuidelinePercent(attackLastPercent) }
+//                            delay(16)
+//                        }
+//                    }
+                    attackSwiping = false
+                    if (attack.ready() && lastPercent < 0.5f) act(attack) else animateCard(attack)
                 }
             }
-            lastY = event.rawY
+            attackLastY = event.rawY
+            true
+        }
+
+        var stunLastY = 0f
+//        var stunLastPercent = (stunGuideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
+        find<LinearLayout>(R.id.stunCard).setOnTouchListener { _, event ->
+            val lastPercent = (stunGuideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
+            when(event.action) {
+                MotionEvent.ACTION_DOWN -> stunSwiping = true
+                MotionEvent.ACTION_MOVE -> {
+                    stunSwiping = true
+//                    stunLastPercent -= (stunLastY - event.rawY) / windowY
+                    stunGuideline.setGuidelinePercent(lastPercent - (stunLastY - event.rawY) / windowY)
+                }
+                MotionEvent.ACTION_UP -> {
+//                    GlobalScope.launch {
+//                        while(stunLastPercent < 0.7f) {
+//                            stunLastPercent += 0.05f
+//                            if (stunLastPercent > 0.7f) stunLastPercent = 0.7f
+//                            runOnUiThread { stunGuideline.setGuidelinePercent(stunLastPercent) }
+//                            delay(16)
+//                        }
+//                    }
+                    stunSwiping = false
+                    if (stun.ready() && lastPercent < 0.5f) act(stun) else animateCard(stun)
+                }
+            }
+            stunLastY = event.rawY
             true
         }
 
@@ -395,6 +435,10 @@ class MainActivity : AppCompatActivity() {
         player.act()
         enemy.act()
 
+        player.update()
+        enemy.update()
+        update()
+
         if (!enemy.alive()) {
             events.add("${enemy.name} dies")
             events.add("++ end combat $combat ++")
@@ -410,9 +454,64 @@ class MainActivity : AppCompatActivity() {
             """.trimIndent()) { yesButton {} }.show()
             newGame()
         } else {
-            player.update()
-            enemy.update()
             newRound()
+        }
+    }
+
+    private fun update() {
+        animateCard(attack)
+        animateCard(stun)
+    }
+
+    // constants
+    val top = 0.7f
+    val bottom = 0.9f
+    val range = bottom - top
+    val step = 0.05f
+
+    private fun animateCard(action: Action) {
+        var animation: Job?
+        var swiping = false
+        lateinit var guideline: Guideline
+        when(action) {
+            is Attack -> {
+                animation = attackAnimation
+                swiping = attackSwiping
+                guideline = attackGuideline
+            }
+            is Stun -> {
+                animation = stunAnimation
+                swiping = stunSwiping
+                guideline = stunGuideline
+            }
+            else -> throw IllegalArgumentException("action animation not supported")
+        }
+
+        if (!swiping) {
+            log.info("cancel animation")
+            animation?.cancel()
+
+            log.info("launch animation")
+            animation = GlobalScope.launch {
+                var percent: Float = (guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
+                var targetPercent: Float = if (action.ready()) top else top + (range / action.cooldown) * (action.left + 1)
+                log.info("percent $percent; targetPercent $targetPercent")
+                if (percent < targetPercent) {
+                    while (percent < targetPercent) {
+                        percent += step
+                        if (percent > targetPercent) percent = targetPercent
+                        runOnUiThread { guideline.setGuidelinePercent(percent) }
+                        delay(16)
+                    }
+                } else if (percent > targetPercent) {
+                    while (percent > targetPercent) {
+                        percent -= step
+                        if (percent < targetPercent) percent = targetPercent
+                        runOnUiThread { guideline.setGuidelinePercent(percent) }
+                        delay(16)
+                    }
+                }
+            }
         }
     }
 
@@ -453,13 +552,13 @@ class MainActivity : AppCompatActivity() {
         if (player.stunned()) {
             defendButton.visibility = View.GONE
 //            attackButton.visibility = View.GONE
-            stunButton.visibility = View.GONE
+//            stunButton.visibility = View.GONE
             stealButton.visibility = View.GONE
             waitButton.visibility = View.VISIBLE
         } else {
             defendButton.visibility = if (defend.ready()) View.VISIBLE else View.GONE
 //            attackButton.visibility = if (attack.ready()) View.VISIBLE else View.GONE
-            stunButton.visibility = if (stun.ready()) View.VISIBLE else View.GONE
+//            stunButton.visibility = if (stun.ready()) View.VISIBLE else View.GONE
             stealButton.visibility = if (steal.ready()) View.VISIBLE else View.GONE
             waitButton.visibility = View.GONE
         }
