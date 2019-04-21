@@ -3,8 +3,6 @@ package industries.goodteam.gambit.entity
 import industries.goodteam.gambit.StatType
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.effect.AppliedEffect
-import org.jetbrains.anko.AnkoLogger
-import org.jetbrains.anko.info
 
 open class Entity(
     var name: String,
@@ -17,8 +15,6 @@ open class Entity(
     var concentration: Int = 1,
     vararg var actions: Action
 ) {
-
-    val log = AnkoLogger(this.javaClass)
 
     var health = vitality
     var shield = 0
@@ -39,13 +35,11 @@ open class Entity(
             action.update()
         }
 
-        log.info("beforeFilter: ${effects.joinToString(",") { it.value.toString() }}")
         effects.removeAll{
             it.update()
             if (it.done()) modifyStat(it.targetStat, -it.value)
             it.done()
         }
-        log.info("afterFilter: ${effects.joinToString(",") { it.left.toString() }}")
 
         if (stunned()) stunLeft--
     }

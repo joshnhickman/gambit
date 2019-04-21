@@ -1,16 +1,17 @@
 package industries.goodteam.gambit
 
+import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
+import android.graphics.Point
 import android.os.Bundle
+import android.support.constraint.Guideline
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.view.MotionEvent
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.effect.Effect
 import industries.goodteam.gambit.entity.Entity
@@ -20,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
+import org.jetbrains.anko.sdk27.coroutines.onTouch
 
 class MainActivity : AppCompatActivity() {
 
@@ -61,6 +63,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var eventsText: TextView
     private lateinit var goldText: TextView
 
+    private lateinit var guideline: Guideline
+
     private var events = mutableListOf<String>()
     private var level = 0
     private var combat = -1
@@ -68,6 +72,8 @@ class MainActivity : AppCompatActivity() {
 
     private var defeated = mutableListOf<Entity>()
 
+    // TODO: implement performClick for onTouchListeners and disable suppression
+    @SuppressLint("ClickableViewAccessibility")
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -106,6 +112,39 @@ class MainActivity : AppCompatActivity() {
 
         eventsText = find(R.id.eventsText)
         goldText = find(R.id.goldText)
+
+        guideline = find(R.id.attackGuideline)
+
+        // get full y of display
+        var size = Point()
+        windowManager.defaultDisplay.getSize(size)
+        val windowY = size.y
+
+        var lastY = 0f
+        var lastPercent = 0.7f
+        find<LinearLayout>(R.id.attackCard).setOnTouchListener { _, event ->
+            when(event.action) {
+                MotionEvent.ACTION_MOVE -> {
+                    lastPercent -= (lastY - event.rawY) / windowY
+                    guideline.setGuidelinePercent(lastPercent)
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (lastPercent < 0.5f) {
+                        act(attack)
+                    }
+                    GlobalScope.launch {
+                        while(lastPercent < 0.7f) {
+                            lastPercent += 0.05f
+                            if (lastPercent > 0.7f) lastPercent = 0.7f
+                            runOnUiThread { guideline.setGuidelinePercent(lastPercent) }
+                            delay(16)
+                        }
+                    }
+                }
+            }
+            lastY = event.rawY
+            true
+        }
 
         // set up buttons
         find<Button>(R.id.restartButton).onClick {
@@ -413,13 +452,13 @@ class MainActivity : AppCompatActivity() {
 
         if (player.stunned()) {
             defendButton.visibility = View.GONE
-            attackButton.visibility = View.GONE
+//            attackButton.visibility = View.GONE
             stunButton.visibility = View.GONE
             stealButton.visibility = View.GONE
             waitButton.visibility = View.VISIBLE
         } else {
             defendButton.visibility = if (defend.ready()) View.VISIBLE else View.GONE
-            attackButton.visibility = if (attack.ready()) View.VISIBLE else View.GONE
+//            attackButton.visibility = if (attack.ready()) View.VISIBLE else View.GONE
             stunButton.visibility = if (stun.ready()) View.VISIBLE else View.GONE
             stealButton.visibility = if (steal.ready()) View.VISIBLE else View.GONE
             waitButton.visibility = View.GONE
