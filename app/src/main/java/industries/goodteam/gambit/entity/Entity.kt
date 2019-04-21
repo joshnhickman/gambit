@@ -74,11 +74,18 @@ open class Entity(
         return defenceValue
     }
 
-    open fun hit(damage: Int): Int {
-        var actualDamage = damage - shield
-        if (actualDamage < 0) actualDamage = 0
-        if (health - actualDamage >= 0) health -= actualDamage else health = 0
-        return actualDamage
+    open fun damage(amount: Int): Int {
+        var actualAmount = amount - shield
+        if (actualAmount < 0) actualAmount = 0
+        if (health - actualAmount >= 0) health -= actualAmount else health = 0
+        return actualAmount
+    }
+
+    open fun heal(amount: Int = vitality): Int {
+        var actualAmount = amount
+        if (health + amount > vitality) actualAmount = vitality - health
+        health += actualAmount
+        return actualAmount
     }
 
     open fun stun(duration: Int): Int {

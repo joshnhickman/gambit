@@ -20,7 +20,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
-import java.lang.Thread.sleep
 
 class MainActivity : AppCompatActivity() {
 
@@ -174,7 +173,7 @@ class MainActivity : AppCompatActivity() {
         player = Player(
             luck = 1,
             vitality = 40,
-            strength = 4,
+            strength = 1000,
             accuracy = 1,
             armor = 4,
             reflexes = 1,
@@ -192,15 +191,15 @@ class MainActivity : AppCompatActivity() {
         if (level > 0) {
             val cost = level * 50
             alert("heal ${player.vitality / 2} health for $cost gold?") {
-                if (player.gold > cost) {
+                if (player.gold >= cost) {
                     yesButton {
                         player.gold -= level * 50
-                        player.health += player.vitality / 2
+                        player.heal(player.vitality / 2)
+                        draw()
                     }
                 }
                 noButton {}
             }.show()
-            draw()
         }
         combat = 0
         enemies = mutableListOf(
@@ -318,7 +317,7 @@ class MainActivity : AppCompatActivity() {
 
         if (player.intent is Attack) {
             val damage = player.actionValue().random()
-            val actualDamage = enemy.hit(damage)
+            val actualDamage = enemy.damage(damage)
             events.add("you attack for $damage damage")
             events.add("${enemy.name} takes $actualDamage damage")
             GlobalScope.launch {
@@ -332,7 +331,7 @@ class MainActivity : AppCompatActivity() {
         }
         if (enemy.intent is Attack) {
             val damage = enemy.actionValue().random()
-            val actualDamage = player.hit(damage)
+            val actualDamage = player.damage(damage)
             events.add("${enemy.name} attacks for $damage damage")
             events.add("you take $actualDamage damage")
             GlobalScope.launch {
