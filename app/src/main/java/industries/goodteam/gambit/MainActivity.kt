@@ -245,7 +245,7 @@ class MainActivity : AppCompatActivity() {
             Entity(
                 name = "weakener",
                 luck = 1,
-                vitality = 30 + level,
+                vitality = 30 + 5 * level,
                 strength = 5 + level,
                 accuracy = 1 + level,
                 armor = 5 + level,
@@ -315,7 +315,7 @@ class MainActivity : AppCompatActivity() {
         }
         if (enemy.intent is Defend) events.add("${enemy.name} prepares to defend ${enemy.defend()} damage")
 
-        if (player.intent is Attack) {
+        if (player.alive() && player.intent is Attack) {
             val damage = player.actionValue().random()
             val actualDamage = enemy.damage(damage)
             events.add("you attack for $damage damage")
@@ -329,7 +329,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        if (enemy.intent is Attack) {
+        if (enemy.alive() && enemy.intent is Attack) {
             val damage = enemy.actionValue().random()
             val actualDamage = player.damage(damage)
             events.add("${enemy.name} attacks for $damage damage")
