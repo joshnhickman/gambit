@@ -173,7 +173,7 @@ class MainActivity : AppCompatActivity() {
         player = Player(
             luck = 1,
             vitality = 40,
-            strength = 1000,
+            strength = 4,
             accuracy = 1,
             armor = 4,
             reflexes = 1,
@@ -415,11 +415,13 @@ class MainActivity : AppCompatActivity() {
             defendButton.visibility = View.GONE
             attackButton.visibility = View.GONE
             stunButton.visibility = View.GONE
+            stealButton.visibility = View.GONE
             waitButton.visibility = View.VISIBLE
         } else {
             defendButton.visibility = if (defend.ready()) View.VISIBLE else View.GONE
             attackButton.visibility = if (attack.ready()) View.VISIBLE else View.GONE
             stunButton.visibility = if (stun.ready()) View.VISIBLE else View.GONE
+            stealButton.visibility = if (steal.ready()) View.VISIBLE else View.GONE
             waitButton.visibility = View.GONE
         }
     }
