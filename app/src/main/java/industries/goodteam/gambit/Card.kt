@@ -1,0 +1,48 @@
+package industries.goodteam.gambit
+
+import android.support.constraint.ConstraintLayout
+import android.support.constraint.Guideline
+import android.support.v7.app.AppCompatActivity
+import android.widget.Button
+import android.widget.TextView
+import industries.goodteam.gambit.action.Action
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
+
+class Card(
+    val context: AppCompatActivity,
+    val action: Action,
+    val guideline: Guideline,
+    val button: Button,
+    val text: TextView
+) {
+
+    companion object {
+        const val delayMillis = 16L
+        const val top = 0.7f
+        const val bottom = 0.9f
+        const val range = bottom - top
+        const val step = 0.01f
+    }
+
+    var animation: Job? = null
+
+    fun animate() {
+        context.runOnUiThread { button.isEnabled = action.ready() }
+        var percent: Float = (guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
+        var targetPercent = if (action.ready()) top else top + (range / maxOf(action.cooldown, action.left)) * (action.left + 1)
+        animation?.cancel()
+        animation = GlobalScope.launch {
+            while (percent != targetPercent) {
+                if (percent < targetPercent) percent += step else if (percent > targetPercent) percent -= step
+                if ((targetPercent - percent).absoluteValue < step) percent = targetPercent
+                context.runOnUiThread { guideline.setGuidelinePercent(percent) }
+                delay(delayMillis)
+            }
+        }
+    }
+
+}

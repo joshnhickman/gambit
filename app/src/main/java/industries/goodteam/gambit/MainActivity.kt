@@ -2,6 +2,7 @@ package industries.goodteam.gambit
 
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.support.constraint.Guideline
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.InputType
@@ -61,6 +62,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var eventsText: TextView
     private lateinit var goldText: TextView
 
+    private lateinit var defendCard: Card
+    private lateinit var attackCard: Card
+    private lateinit var stunCard: Card
+    private lateinit var stealCard: Card
+
     private var events = mutableListOf<String>()
     private var level = 0
     private var combat = -1
@@ -80,15 +86,19 @@ class MainActivity : AppCompatActivity() {
         // get handles to ui
         defendButton = find<Button>(R.id.defendButton).apply { onClick { act(defend) } }
         defendText = find(R.id.defendText)
+        defendCard = Card(this, defend, find<Guideline>(R.id.defendGuideline), defendButton, defendText)
 
         attackButton = find<Button>(R.id.attackButton).apply { onClick { act(attack) } }
         attackText = find(R.id.attackText)
+        attackCard = Card(this, attack, find<Guideline>(R.id.attackGuideline), attackButton, attackText)
 
         stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
         stunText = find(R.id.stunText)
+        stunCard = Card(this, stun, find<Guideline>(R.id.stunGuideline), stunButton, stunText)
 
         stealButton = find<Button>(R.id.stealButton).apply { onClick { act(steal) } }
         stealText = find(R.id.stealText)
+        stealCard = Card(this, steal, find<Guideline>(R.id.stealGuideline), stealButton, stealText)
 
         waitButton = find<Button>(R.id.waitButton).apply { onClick { act(Wait()) } }
 
@@ -356,6 +366,14 @@ class MainActivity : AppCompatActivity() {
         player.act()
         enemy.act()
 
+        player.update()
+        enemy.update()
+
+        defendCard.animate()
+        attackCard.animate()
+        stunCard.animate()
+        stealCard.animate()
+
         if (!enemy.alive()) {
             events.add("${enemy.name} dies")
             events.add("++ end combat $combat ++")
@@ -370,11 +388,7 @@ class MainActivity : AppCompatActivity() {
                 ${defeated.joinToString(",") { it.name }}
             """.trimIndent()) { yesButton {} }.show()
             newGame()
-        } else {
-            player.update()
-            enemy.update()
-            newRound()
-        }
+        } else newRound()
     }
 
     private fun draw() {
@@ -412,16 +426,16 @@ class MainActivity : AppCompatActivity() {
         eventsText.text = events.takeLast(10).joinToString("\n")
 
         if (player.stunned()) {
-            defendButton.visibility = View.GONE
-            attackButton.visibility = View.GONE
-            stunButton.visibility = View.GONE
-            stealButton.visibility = View.GONE
+            defendButton.isEnabled = false
+            attackButton.isEnabled = false
+            stunButton.isEnabled = false
+            stealButton.isEnabled = false
             waitButton.visibility = View.VISIBLE
         } else {
-            defendButton.visibility = if (defend.ready()) View.VISIBLE else View.GONE
-            attackButton.visibility = if (attack.ready()) View.VISIBLE else View.GONE
-            stunButton.visibility = if (stun.ready()) View.VISIBLE else View.GONE
-            stealButton.visibility = if (steal.ready()) View.VISIBLE else View.GONE
+            defendButton.isEnabled = defend.ready()
+            attackButton.isEnabled = attack.ready()
+            stunButton.isEnabled = stun.ready()
+            stealButton.isEnabled = steal.ready()
             waitButton.visibility = View.GONE
         }
     }

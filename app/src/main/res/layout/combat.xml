@@ -12,6 +12,13 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent=".7" />
 
+    <android.support.constraint.Guideline
+        android:id="@+id/defendGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent=".7" />
+
     <LinearLayout
         android:id="@+id/defendCard"
         android:layout_width="0dp"
@@ -26,25 +33,31 @@
         app:layout_constraintEnd_toStartOf="@+id/attackCard"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/bottomGuideline"
+        app:layout_constraintTop_toTopOf="@+id/defendGuideline"
         app:layout_constraintVertical_bias="0.0">
 
         <Button
             android:id="@+id/defendButton"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="Defend" />
+            android:layout_height="wrap_content"
+            android:text="DEFEND" />
 
         <TextView
             android:id="@+id/defendText"
-            android:layout_marginStart="8dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
             android:text="TextView" />
 
     </LinearLayout>
+
+    <android.support.constraint.Guideline
+        android:id="@+id/attackGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent=".7" />
 
     <LinearLayout
         android:id="@+id/attackCard"
@@ -60,25 +73,31 @@
         app:layout_constraintEnd_toStartOf="@+id/utilityCard"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/defendCard"
-        app:layout_constraintTop_toTopOf="@+id/bottomGuideline"
+        app:layout_constraintTop_toTopOf="@+id/attackGuideline"
         app:layout_constraintVertical_bias="0.0">
 
         <Button
             android:id="@+id/attackButton"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:text="Attack" />
 
         <TextView
             android:id="@+id/attackText"
-            android:layout_marginStart="8dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
             android:text="TextView" />
 
     </LinearLayout>
+
+    <android.support.constraint.Guideline
+        android:id="@+id/stunGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent=".7" />
 
     <LinearLayout
         android:id="@+id/utilityCard"
@@ -94,25 +113,31 @@
         app:layout_constraintEnd_toStartOf="@+id/stealCard"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/attackCard"
-        app:layout_constraintTop_toTopOf="@+id/bottomGuideline"
+        app:layout_constraintTop_toTopOf="@+id/stunGuideline"
         app:layout_constraintVertical_bias="0.0">
 
         <Button
             android:id="@+id/utilityButton"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:text="Stun" />
 
         <TextView
             android:id="@+id/stunText"
-            android:layout_marginStart="8dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
             android:text="TextView" />
 
     </LinearLayout>
+
+    <android.support.constraint.Guideline
+        android:id="@+id/stealGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent=".7" />
 
     <LinearLayout
         android:id="@+id/stealCard"
@@ -128,22 +153,21 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/utilityCard"
-        app:layout_constraintTop_toTopOf="@+id/bottomGuideline"
+        app:layout_constraintTop_toTopOf="@+id/stealGuideline"
         app:layout_constraintVertical_bias="0.0">
 
         <Button
             android:id="@+id/stealButton"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:text="steal" />
 
         <TextView
             android:id="@+id/stealText"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
             android:text="TextView" />
 
     </LinearLayout>
@@ -159,6 +183,7 @@
         android:max="100"
         android:progress="100"
         android:progressTint="@android:color/holo_red_light"
+        android:scrollbarSize="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -255,7 +280,7 @@
         android:id="@+id/playerHealthText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="12dp"
         android:text="TextView"
         app:layout_constraintBottom_toTopOf="@+id/healthBar"
         app:layout_constraintStart_toStartOf="parent" />
@@ -287,7 +312,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:text="wait"
+        android:text="WAIT"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/bottomGuideline"
         app:layout_constraintEnd_toEndOf="parent" />
