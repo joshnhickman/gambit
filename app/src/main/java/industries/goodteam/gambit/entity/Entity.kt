@@ -35,17 +35,13 @@ open class Entity(
     open fun update() {
         shield = 0
 
-        for (action in actions) {
-            action.update()
-        }
+        actions.forEach { it.update() }
 
-        log.info("beforeFilter: ${effects.joinToString(",") { it.value.toString() }}")
-        effects.removeAll{
+        effects.removeAll {
             it.update()
             if (it.done()) modifyStat(it.targetStat, -it.value)
             it.done()
         }
-        log.info("afterFilter: ${effects.joinToString(",") { it.left.toString() }}")
 
         if (stunned()) stunLeft--
     }
@@ -90,6 +86,7 @@ open class Entity(
 
     open fun stun(duration: Int): Int {
         stunLeft = duration
+        actions.forEach { it.left = stunLeft }
         intend(Wait())
         return duration
     }

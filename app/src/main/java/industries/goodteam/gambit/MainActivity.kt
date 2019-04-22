@@ -425,19 +425,7 @@ class MainActivity : AppCompatActivity() {
 
         eventsText.text = events.takeLast(10).joinToString("\n")
 
-        if (player.stunned()) {
-            defendButton.isEnabled = false
-            attackButton.isEnabled = false
-            stunButton.isEnabled = false
-            stealButton.isEnabled = false
-            waitButton.visibility = View.VISIBLE
-        } else {
-            defendButton.isEnabled = defend.ready()
-            attackButton.isEnabled = attack.ready()
-            stunButton.isEnabled = stun.ready()
-            stealButton.isEnabled = steal.ready()
-            waitButton.visibility = View.GONE
-        }
+        waitButton.visibility = if (player.stunned()) View.VISIBLE else View.GONE
     }
 
     fun EditText.afterTextChanged(afterTextChanged: (String) -> Unit) {
