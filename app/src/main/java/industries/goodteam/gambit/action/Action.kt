@@ -17,7 +17,7 @@ abstract class Action(
     }
 
     open fun perform() {
-        if (!ready()) throw IllegalStateException("cooldown is not finished")
+        if (!ready()) throw IllegalStateException("cooldown is not finished for $name")
         left = cooldown
     }
 

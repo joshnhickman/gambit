@@ -366,13 +366,23 @@ class MainActivity : AppCompatActivity() {
         player.act()
         enemy.act()
 
-        player.update()
-        enemy.update()
-
         defendCard.animate()
         attackCard.animate()
         stunCard.animate()
         stealCard.animate()
+
+        enableButtons(false)
+        draw()
+
+        GlobalScope.launch {
+            delay(500)
+            runOnUiThread { endRound() }
+        }
+    }
+
+    private fun endRound() {
+        player.update()
+        enemy.update()
 
         if (!enemy.alive()) {
             events.add("${enemy.name} dies")
@@ -389,6 +399,18 @@ class MainActivity : AppCompatActivity() {
             """.trimIndent()) { yesButton {} }.show()
             newGame()
         } else newRound()
+
+        defendCard.animate()
+        attackCard.animate()
+        stunCard.animate()
+        stealCard.animate()
+    }
+
+    private fun enableButtons(enabled: Boolean = true) {
+        defendButton.isEnabled = enabled
+        attackButton.isEnabled = enabled
+        stunButton.isEnabled = enabled
+        stealButton.isEnabled = enabled
     }
 
     private fun draw() {
