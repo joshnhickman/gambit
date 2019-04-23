@@ -1,10 +1,10 @@
 package industries.goodteam.gambit
 
-import android.support.constraint.ConstraintLayout
-import android.support.constraint.Guideline
-import android.support.v7.app.AppCompatActivity
+import android.app.Activity
 import android.widget.Button
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.Guideline
 import industries.goodteam.gambit.action.Action
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
 class Card(
-    val context: AppCompatActivity,
+    val context: Activity,
     val action: Action,
     val guideline: Guideline,
     val button: Button,

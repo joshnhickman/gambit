@@ -1,10 +1,12 @@
 package industries.goodteam.gambit.entity
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import industries.goodteam.gambit.StatType
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.effect.AppliedEffect
 import org.jetbrains.anko.AnkoLogger
-import org.jetbrains.anko.info
 
 open class Entity(
     var name: String,
@@ -16,7 +18,7 @@ open class Entity(
     var reflexes: Int = 1,
     var concentration: Int = 1,
     vararg var actions: Action
-) {
+) : ViewModel() {
 
     val log = AnkoLogger(this.javaClass)
 
