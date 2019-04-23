@@ -1,4 +1,4 @@
-package industries.goodteam.gambit.entity
+package industries.goodteam.gambit.actor
 
 import industries.goodteam.gambit.action.*
 
@@ -14,7 +14,7 @@ class Player(
     val defend: Defend,
     val stun: Stun,
     val steal: Steal
-) : Entity(
+) : Actor(
     name = "player",
     luck = luck,
     vitality = vitality,

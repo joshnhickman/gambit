@@ -1,14 +1,12 @@
-package industries.goodteam.gambit.entity
+package industries.goodteam.gambit.actor
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import industries.goodteam.gambit.StatType
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.effect.AppliedEffect
 import org.jetbrains.anko.AnkoLogger
 
-open class Entity(
+open class Actor(
     var name: String,
     var luck: Int = 1,
     var vitality: Int = 30,

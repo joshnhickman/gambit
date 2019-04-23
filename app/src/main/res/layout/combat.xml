@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--<data>-->
-        <!--<variable name="player" type="industries.goodteam.gambit.entity.Entity" />-->
-        <!--<variable name="enemy" type="industries.goodteam.gambit.entity.Entity" />-->
+        <!--<variable name="player" type="industries.goodteam.gambit.actor.Actor" />-->
+        <!--<variable name="enemy" type="industries.goodteam.gambit.actor.Actor" />-->
     <!--</data>-->
 
     <androidx.constraintlayout.widget.ConstraintLayout

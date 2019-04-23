@@ -14,8 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.databinding.CombatBinding
 import industries.goodteam.gambit.effect.Effect
-import industries.goodteam.gambit.entity.Entity
-import industries.goodteam.gambit.entity.Player
+import industries.goodteam.gambit.actor.Actor
+import industries.goodteam.gambit.actor.Player
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,9 +32,9 @@ class MainActivity : AppCompatActivity() {
     private var steal = Steal(0)
 
     private lateinit var player: Player
-    private lateinit var enemy: Entity
+    private lateinit var enemy: Actor
 
-    private lateinit var enemies: List<Entity>
+    private lateinit var enemies: List<Actor>
 
     private lateinit var enemyNameText: TextView
     private lateinit var enemyActionText: TextView
@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
     private var combat = -1
     private var round = 0
 
-    private var defeated = mutableListOf<Entity>()
+    private var defeated = mutableListOf<Actor>()
 
     private lateinit var binding: CombatBinding
 
@@ -215,7 +215,7 @@ class MainActivity : AppCompatActivity() {
         }
         combat = 0
         enemies = mutableListOf(
-            Entity(
+            Actor(
                 name = "generic",
                 luck = 1,
                 vitality = 30 + 5 * level,
@@ -226,7 +226,7 @@ class MainActivity : AppCompatActivity() {
                 concentration = 0 + level,
                 actions = *arrayOf(Attack(0), Defend(1))
             ),
-            Entity(
+            Actor(
                 name = "defender",
                 luck = 1,
                 vitality = 30 + 5 * level,
@@ -235,7 +235,7 @@ class MainActivity : AppCompatActivity() {
                 armor = 20 + level,
                 reflexes = 5 + level,
                 actions = *arrayOf(Attack(1, 1), Defend(0))),
-            Entity(
+            Actor(
                 name = "stunner",
                 luck = 1,
                 vitality = 30 + 5 * level,
@@ -245,7 +245,7 @@ class MainActivity : AppCompatActivity() {
                 reflexes = 2 + level,
                 concentration = 0 + level,
                 actions = *arrayOf(Attack(0), Stun(4, 2))),
-            Entity(
+            Actor(
                 name = "damager",
                 luck = 1 + level,
                 vitality = 30 + 5 * level,
@@ -254,7 +254,7 @@ class MainActivity : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 actions = *arrayOf(Attack(4, 4), Defend(0))),
-            Entity(
+            Actor(
                 name = "weakener",
                 luck = 1,
                 vitality = 30 + 5 * level,
