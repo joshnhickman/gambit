@@ -388,14 +388,6 @@
             app:layout_constraintTop_toBottomOf="@+id/enemyHealthBar">
 
             <TextView
-                android:id="@+id/detailsClose"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="X  "
-                android:textAlignment="viewEnd"
-                android:textSize="10sp" />
-
-            <TextView
                 android:id="@+id/detailsName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

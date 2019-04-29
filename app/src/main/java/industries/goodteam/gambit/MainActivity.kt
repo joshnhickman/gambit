@@ -10,10 +10,10 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import industries.goodteam.gambit.action.*
-import industries.goodteam.gambit.databinding.CombatBinding
-import industries.goodteam.gambit.effect.Effect
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.actor.Player
+import industries.goodteam.gambit.databinding.CombatBinding
+import industries.goodteam.gambit.effect.Effect
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -93,54 +93,90 @@ class MainActivity : AppCompatActivity() {
         defendButton = find<Button>(R.id.defendButton).apply { onClick { act(defend) } }
         defendText = find(R.id.defendText)
         defendCard = Card(this, defend, find(R.id.defendGuideline), defendButton, defendText)
-        find<LinearLayout>(R.id.defendCard).setOnLongClickListener { v ->
-            detailsName.text = "DEFEND"
-            detailsText.text = """
-                |*block ${player.actionValue(defend)} damage
-                |*${defend.cooldown} turn cooldown
-            """.trimMargin()
-            detailsCard.visibility = View.VISIBLE
-            true
+        find<LinearLayout>(R.id.defendCard).apply {
+            setOnLongClickListener { _ ->
+                detailsName.text = "DEFEND"
+                detailsText.text = """
+                    |*block ${player.actionValue(defend)} damage
+                    |*${defend.cooldown} turn cooldown
+                """.trimMargin()
+                detailsCard.visibility = View.VISIBLE
+                true
+            }
+            setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
+                    detailsCard.visibility = View.GONE
+                    true
+                }
+                false
+            }
         }
 
         attackButton = find<Button>(R.id.attackButton).apply { onClick { act(attack) } }
         attackText = find(R.id.attackText)
         attackCard = Card(this, attack, find(R.id.attackGuideline), attackButton, attackText)
-        find<LinearLayout>(R.id.attackCard).setOnLongClickListener { v ->
-            detailsName.text = "ATTACK"
-            detailsText.text = """
-                |*deal ${player.actionValue(attack)} damage
-                |*damage increases with consecutive attacks
-                |*${attack.cooldown} turn cooldown
-            """.trimMargin()
-            detailsCard.visibility = View.VISIBLE
-            true
+        find<LinearLayout>(R.id.attackCard).apply {
+            setOnLongClickListener { _ ->
+                detailsName.text = "ATTACK"
+                detailsText.text = """
+                    |*deal ${player.actionValue(attack)} damage
+                    |*damage increases with consecutive attacks
+                    |*${attack.cooldown} turn cooldown
+                """.trimMargin()
+                detailsCard.visibility = View.VISIBLE
+                true
+            }
+            setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
+                    detailsCard.visibility = View.GONE
+                    true
+                }
+                false
+            }
         }
 
         stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
         stunText = find(R.id.stunText)
         stunCard = Card(this, stun, find(R.id.stunGuideline), stunButton, stunText)
-        find<LinearLayout>(R.id.utilityCard).setOnLongClickListener { v ->
-            detailsName.text = "STUN"
-            detailsText.text = """
-                |*stun for ${player.actionValue(stun)} turn(s)
-                |*${stun.cooldown} turn cooldown
-            """.trimMargin()
-            detailsCard.visibility = View.VISIBLE
-            true
+        find<LinearLayout>(R.id.utilityCard).apply {
+            setOnLongClickListener { _ ->
+                detailsName.text = "STUN"
+                detailsText.text = """
+                    |*stun for ${player.actionValue(stun)} turn(s)
+                    |*${stun.cooldown} turn cooldown
+                """.trimMargin()
+                detailsCard.visibility = View.VISIBLE
+                true
+            }
+            setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
+                    detailsCard.visibility = View.GONE
+                    true
+                }
+                false
+            }
         }
 
         stealButton = find<Button>(R.id.stealButton).apply { onClick { act(steal) } }
         stealText = find(R.id.stealText)
         stealCard = Card(this, steal, find(R.id.stealGuideline), stealButton, stealText)
-        find<LinearLayout>(R.id.stealCard).setOnLongClickListener { v ->
-            detailsName.text = "STEAL"
-            detailsText.text = """
-                |*steal ${player.actionValue(steal)} gold
-                |*${steal.cooldown} turn cooldown
-            """.trimMargin()
-            detailsCard.visibility = View.VISIBLE
-            true
+        find<LinearLayout>(R.id.stealCard).apply {
+            setOnLongClickListener { _ ->
+                detailsName.text = "STEAL"
+                detailsText.text = """
+                    |*steal ${player.actionValue(steal)} gold
+                    |*${steal.cooldown} turn cooldown
+                """.trimMargin()
+                detailsCard.visibility = View.VISIBLE
+                true
+            }
+            setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
+                    detailsCard.visibility = View.GONE
+                    true
+                }
+                false
+            }
         }
 
         waitButton = find<Button>(R.id.waitButton).apply { onClick { act(Wait()) } }
@@ -216,14 +252,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         newGame()
-    }
-
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (detailsCard.visibility == View.VISIBLE) {
-            detailsCard.visibility = View.GONE
-            return true
-        }
-        return super.onTouchEvent(event)
     }
 
     private fun newGame() {
