@@ -5,11 +5,9 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.view.MotionEvent
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.databinding.CombatBinding
@@ -67,6 +65,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var stunCard: Card
     private lateinit var stealCard: Card
 
+    private lateinit var detailsCard: LinearLayout
+
     private var events = mutableListOf<String>()
     private var level = 0
     private var combat = -1
@@ -85,22 +85,63 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.combat)
 
+        detailsCard = find<LinearLayout>(R.id.detailsCard).apply { visibility = View.GONE }
+        val detailsName = find<TextView>(R.id.detailsName)
+        val detailsText = find<TextView>(R.id.detailsText)
+
         // get handles to ui
         defendButton = find<Button>(R.id.defendButton).apply { onClick { act(defend) } }
         defendText = find(R.id.defendText)
         defendCard = Card(this, defend, find(R.id.defendGuideline), defendButton, defendText)
+        find<LinearLayout>(R.id.defendCard).setOnLongClickListener { v ->
+            detailsName.text = "DEFEND"
+            detailsText.text = """
+                |*block ${player.actionValue(defend)} damage
+                |*${defend.cooldown} turn cooldown
+            """.trimMargin()
+            detailsCard.visibility = View.VISIBLE
+            true
+        }
 
         attackButton = find<Button>(R.id.attackButton).apply { onClick { act(attack) } }
         attackText = find(R.id.attackText)
         attackCard = Card(this, attack, find(R.id.attackGuideline), attackButton, attackText)
+        find<LinearLayout>(R.id.attackCard).setOnLongClickListener { v ->
+            detailsName.text = "ATTACK"
+            detailsText.text = """
+                |*deal ${player.actionValue(attack)} damage
+                |*damage increases with consecutive attacks
+                |*${attack.cooldown} turn cooldown
+            """.trimMargin()
+            detailsCard.visibility = View.VISIBLE
+            true
+        }
 
         stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
         stunText = find(R.id.stunText)
         stunCard = Card(this, stun, find(R.id.stunGuideline), stunButton, stunText)
+        find<LinearLayout>(R.id.utilityCard).setOnLongClickListener { v ->
+            detailsName.text = "STUN"
+            detailsText.text = """
+                |*stun for ${player.actionValue(stun)} turn(s)
+                |*${stun.cooldown} turn cooldown
+            """.trimMargin()
+            detailsCard.visibility = View.VISIBLE
+            true
+        }
 
         stealButton = find<Button>(R.id.stealButton).apply { onClick { act(steal) } }
         stealText = find(R.id.stealText)
         stealCard = Card(this, steal, find(R.id.stealGuideline), stealButton, stealText)
+        find<LinearLayout>(R.id.stealCard).setOnLongClickListener { v ->
+            detailsName.text = "STEAL"
+            detailsText.text = """
+                |*steal ${player.actionValue(steal)} gold
+                |*${steal.cooldown} turn cooldown
+            """.trimMargin()
+            detailsCard.visibility = View.VISIBLE
+            true
+        }
 
         waitButton = find<Button>(R.id.waitButton).apply { onClick { act(Wait()) } }
 
@@ -175,6 +216,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         newGame()
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        if (detailsCard.visibility == View.VISIBLE) {
+            detailsCard.visibility = View.GONE
+            return true
+        }
+        return super.onTouchEvent(event)
     }
 
     private fun newGame() {
@@ -394,10 +443,10 @@ class MainActivity : AppCompatActivity() {
             newCombat()
         } else if (!player.alive()) {
             alert("""
-                ${enemy.name} defeated you
-                stole ${player.gold} gold
-                defeated ${defeated.size} enemies:
-                ${defeated.joinToString(",") { it.name }}
+                |${enemy.name} defeated you
+                |stole ${player.gold} gold
+                |defeated ${defeated.size} enemies:
+                |${defeated.joinToString(",") { it.name }}
             """.trimIndent()) { yesButton {} }.show()
             newGame()
         } else newRound()
@@ -428,17 +477,21 @@ class MainActivity : AppCompatActivity() {
         enemyNameText.text = enemy.name
         enemyActionText.text = "${enemy.intent.name} ${enemy.actionValue()}"
 
-        defendText.text = """*block ${player.actionValue(defend)} damage
+        defendText.text = """
+            |*block ${player.actionValue(defend)} damage
             |*${defend.cooldown} turn cooldown
         """.trimMargin()
-        attackText.text = """*deal ${player.actionValue(attack)} damage
+        attackText.text = """
+            |*deal ${player.actionValue(attack)} damage
             |*damage increases with consecutive attacks
             |*${attack.cooldown} turn cooldown
         """.trimMargin()
-        stunText.text = """*stun for ${player.actionValue(stun)} turn(s)
+        stunText.text = """
+            |*stun for ${player.actionValue(stun)} turn(s)
             |*${stun.cooldown} turn cooldown
         """.trimMargin()
-        stealText.text = """*steal ${player.actionValue(steal)} gold
+        stealText.text = """
+            |*steal ${player.actionValue(steal)} gold
             |*${steal.cooldown} turn cooldown
         """.trimMargin()
 
