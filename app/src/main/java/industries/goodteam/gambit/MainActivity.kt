@@ -302,6 +302,11 @@ class MainActivity : AppCompatActivity() {
 
         combat++
 
+        defendCard.animate()
+        attackCard.animate()
+        stunCard.animate()
+        stealCard.animate()
+
         if (combat == enemies.size + 1) {
             longToast("level $level complete, advancing")
             level++
