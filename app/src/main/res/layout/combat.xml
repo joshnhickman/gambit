@@ -28,7 +28,7 @@
             app:layout_constraintGuide_percent=".7" />
 
         <LinearLayout
-            android:id="@+id/defendCard"
+            android:id="@+id/defendCardLayout"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="8dp"
@@ -38,7 +38,7 @@
             android:background="@drawable/border"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/attackCard"
+            app:layout_constraintEnd_toStartOf="@+id/attackCardLayout"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/defendGuideline"
@@ -68,7 +68,7 @@
             app:layout_constraintGuide_percent=".7" />
 
         <LinearLayout
-            android:id="@+id/attackCard"
+            android:id="@+id/attackCardLayout"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="2dp"
@@ -78,9 +78,9 @@
             android:background="@drawable/border"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/utilityCard"
+            app:layout_constraintEnd_toStartOf="@+id/stunCardLayout"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/defendCard"
+            app:layout_constraintStart_toEndOf="@+id/defendCardLayout"
             app:layout_constraintTop_toTopOf="@+id/attackGuideline"
             app:layout_constraintVertical_bias="0.0">
 
@@ -108,7 +108,7 @@
             app:layout_constraintGuide_percent=".7" />
 
         <LinearLayout
-            android:id="@+id/utilityCard"
+            android:id="@+id/stunCardLayout"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="2dp"
@@ -118,14 +118,14 @@
             android:background="@drawable/border"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/stealCard"
+            app:layout_constraintEnd_toStartOf="@+id/stealCardLayout"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/attackCard"
+            app:layout_constraintStart_toEndOf="@+id/attackCardLayout"
             app:layout_constraintTop_toTopOf="@+id/stunGuideline"
             app:layout_constraintVertical_bias="0.0">
 
             <Button
-                android:id="@+id/utilityButton"
+                android:id="@+id/stunButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Stun" />
@@ -148,7 +148,7 @@
             app:layout_constraintGuide_percent=".7" />
 
         <LinearLayout
-            android:id="@+id/stealCard"
+            android:id="@+id/stealCardLayout"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="2dp"
@@ -160,7 +160,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/utilityCard"
+            app:layout_constraintStart_toEndOf="@+id/stunCardLayout"
             app:layout_constraintTop_toTopOf="@+id/stealGuideline"
             app:layout_constraintVertical_bias="0.0">
 
@@ -181,7 +181,7 @@
         </LinearLayout>
 
         <ProgressBar
-            android:id="@+id/healthBar"
+            android:id="@+id/playerHealthBar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -290,7 +290,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:text="TextView"
-            app:layout_constraintBottom_toTopOf="@+id/healthBar"
+            app:layout_constraintBottom_toTopOf="@+id/playerHealthBar"
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
@@ -336,7 +336,7 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
-            android:id="@+id/playerDamage"
+            android:id="@+id/playerDamageText"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="8dp"
@@ -348,13 +348,13 @@
             android:textColor="#FF0000"
             android:textSize="150sp"
             android:visibility="visible"
-            app:layout_constraintBottom_toTopOf="@+id/healthBar"
+            app:layout_constraintBottom_toTopOf="@+id/playerHealthBar"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/bottomGuideline" />
 
         <TextView
-            android:id="@+id/enemyDamage"
+            android:id="@+id/enemyDamageText"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="8dp"
@@ -367,7 +367,7 @@
             android:textColor="#FF0000"
             android:textSize="150sp"
             android:visibility="visible"
-            app:layout_constraintBottom_toTopOf="@+id/playerDamage"
+            app:layout_constraintBottom_toTopOf="@+id/playerDamageText"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/enemyHealthBar" />
@@ -382,7 +382,7 @@
             android:layout_marginBottom="8dp"
             android:background="@drawable/border"
             android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/playerDamage"
+            app:layout_constraintBottom_toTopOf="@+id/playerDamageText"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/enemyHealthBar">

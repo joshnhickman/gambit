@@ -14,6 +14,7 @@ import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.actor.Player
 import industries.goodteam.gambit.databinding.CombatBinding
 import industries.goodteam.gambit.effect.Effect
+import kotlinx.android.synthetic.main.combat.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,38 +35,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var enemies: List<Actor>
 
-    private lateinit var enemyNameText: TextView
-    private lateinit var enemyActionText: TextView
-
-    private lateinit var defendButton: Button
-    private lateinit var attackButton: Button
-    private lateinit var stunButton: Button
-    private lateinit var stealButton: Button
-    private lateinit var waitButton: Button
-
-    private lateinit var attackText: TextView
-    private lateinit var defendText: TextView
-    private lateinit var stunText: TextView
-    private lateinit var stealText: TextView
-
-    private lateinit var playerHealthBar: ProgressBar
-    private lateinit var enemyHealthBar: ProgressBar
-
-    private lateinit var playerDamageText: TextView
-    private lateinit var enemyDamageText: TextView
-
-    private lateinit var playerHealthText: TextView
-    private lateinit var enemyHealthText: TextView
-
-    private lateinit var eventsText: TextView
-    private lateinit var goldText: TextView
-
     private lateinit var defendCard: Card
     private lateinit var attackCard: Card
     private lateinit var stunCard: Card
     private lateinit var stealCard: Card
-
-    private lateinit var detailsCard: LinearLayout
 
     private var events = mutableListOf<String>()
     private var level = 0
@@ -85,15 +58,11 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.combat)
 
-        detailsCard = find<LinearLayout>(R.id.detailsCard).apply { visibility = View.GONE }
-        val detailsName = find<TextView>(R.id.detailsName)
-        val detailsText = find<TextView>(R.id.detailsText)
+        detailsCard.visibility = View.GONE
 
-        // get handles to ui
-        defendButton = find<Button>(R.id.defendButton).apply { onClick { act(defend) } }
-        defendText = find(R.id.defendText)
+        defendButton.onClick { act(defend) }
         defendCard = Card(this, defend, find(R.id.defendGuideline), defendButton, defendText)
-        find<LinearLayout>(R.id.defendCard).apply {
+        defendCardLayout.apply {
             setOnLongClickListener { _ ->
                 detailsName.text = "DEFEND"
                 detailsText.text = """
@@ -104,18 +73,18 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             setOnTouchListener { _, event ->
+                var ret = false
                 if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
                     detailsCard.visibility = View.GONE
-                    true
+                    ret = true
                 }
-                false
+                ret
             }
         }
 
-        attackButton = find<Button>(R.id.attackButton).apply { onClick { act(attack) } }
-        attackText = find(R.id.attackText)
+        attackButton.onClick { act(attack) }
         attackCard = Card(this, attack, find(R.id.attackGuideline), attackButton, attackText)
-        find<LinearLayout>(R.id.attackCard).apply {
+        attackCardLayout.apply {
             setOnLongClickListener { _ ->
                 detailsName.text = "ATTACK"
                 detailsText.text = """
@@ -135,10 +104,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        stunButton = find<Button>(R.id.utilityButton).apply { onClick { act(stun) } }
-        stunText = find(R.id.stunText)
+        stunButton.onClick { act(stun) }
         stunCard = Card(this, stun, find(R.id.stunGuideline), stunButton, stunText)
-        find<LinearLayout>(R.id.utilityCard).apply {
+        stunCardLayout.apply {
             setOnLongClickListener { _ ->
                 detailsName.text = "STUN"
                 detailsText.text = """
@@ -157,10 +125,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        stealButton = find<Button>(R.id.stealButton).apply { onClick { act(steal) } }
-        stealText = find(R.id.stealText)
+        stealButton.onClick { act(steal) }
         stealCard = Card(this, steal, find(R.id.stealGuideline), stealButton, stealText)
-        find<LinearLayout>(R.id.stealCard).apply {
+        stealCardLayout.apply {
             setOnLongClickListener { _ ->
                 detailsName.text = "STEAL"
                 detailsText.text = """
@@ -179,30 +146,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        waitButton = find<Button>(R.id.waitButton).apply { onClick { act(Wait()) } }
+        waitButton.onClick { act(Wait()) }
 
-        playerHealthBar = find(R.id.healthBar)
-        enemyHealthBar = find(R.id.enemyHealthBar)
+        playerDamageText.alpha = 0f
+        enemyDamageText.alpha = 0f
 
-        playerHealthText = find(R.id.playerHealthText)
-        enemyHealthText = find(R.id.enemyHealthText)
-
-        playerDamageText = find<TextView>(R.id.playerDamage).apply { alpha = 0f }
-        enemyDamageText = find<TextView>(R.id.enemyDamage).apply { alpha = 0f }
-
-        enemyNameText = find(R.id.enemyNameText)
-        enemyActionText = find(R.id.enemyActionText)
-
-        eventsText = find(R.id.eventsText)
-        goldText = find(R.id.goldText)
-
-        // set up buttons
-        find<Button>(R.id.restartButton).onClick {
+        // debug buttons
+        restartButton.onClick {
             log.info("player requested new game")
             newGame()
         }
-
-        find<Button>(R.id.editButton).onClick {
+        editButton.onClick {
             alert("Edit Stats") {
                 customView {
                     verticalLayout {
@@ -533,6 +487,7 @@ class MainActivity : AppCompatActivity() {
         waitButton.visibility = if (player.stunned()) View.VISIBLE else View.GONE
     }
 
+    // helper method to automatically set text as it's edited
     fun EditText.afterTextChanged(afterTextChanged: (String) -> Unit) {
         this.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(editable: Editable) {
@@ -543,6 +498,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    // helper method to default non-int values to 0 when converting to a string
     fun String.getIntWithBlank(): Int {
         return try {
             this.toInt()
