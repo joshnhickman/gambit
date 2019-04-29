@@ -73,12 +73,10 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             setOnTouchListener { _, event ->
-                var ret = false
                 if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
                     detailsCard.visibility = View.GONE
-                    ret = true
-                }
-                ret
+                    true
+                } else false
             }
         }
 
@@ -99,8 +97,7 @@ class MainActivity : AppCompatActivity() {
                 if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
                     detailsCard.visibility = View.GONE
                     true
-                }
-                false
+                } else false
             }
         }
 
@@ -120,8 +117,7 @@ class MainActivity : AppCompatActivity() {
                 if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
                     detailsCard.visibility = View.GONE
                     true
-                }
-                false
+                } else false
             }
         }
 
@@ -141,8 +137,7 @@ class MainActivity : AppCompatActivity() {
                 if (event.action == MotionEvent.ACTION_UP && detailsCard.visibility == View.VISIBLE) {
                     detailsCard.visibility = View.GONE
                     true
-                }
-                false
+                } else false
             }
         }
 
