@@ -2,8 +2,8 @@ package industries.goodteam.gambit.actor
 
 import industries.goodteam.gambit.StatType
 import industries.goodteam.gambit.action.*
+import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.effect.AppliedEffect
-import org.jetbrains.anko.AnkoLogger
 
 open class Actor(
     var name: String,
@@ -49,7 +49,7 @@ open class Actor(
 
     open fun intend(action: Action? = null) {
         intent = when {
-            stunned() -> Wait()
+            stunned() -> Nothing()
             action != null -> action
             else -> actions.filter { it.ready() }.random()
         }
@@ -82,7 +82,7 @@ open class Actor(
     open fun stun(duration: Int): Int {
         stunLeft = duration
         actions.forEach { it.left = stunLeft }
-        intend(Wait())
+        intend(Nothing())
         return duration
     }
 
@@ -115,9 +115,8 @@ open class Actor(
             is Defend -> (if (reflexes < armor) reflexes else armor)..armor
             is Stun -> concentration..concentration
             is Steal -> accuracy * 10..reflexes * 10
-            is Wait -> stunLeft..stunLeft
+            is Nothing -> stunLeft..stunLeft
             is Modify -> action.effect.value..action.effect.value
-            else -> 0..0
         }
     }
 

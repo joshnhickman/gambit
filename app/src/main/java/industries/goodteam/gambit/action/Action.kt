@@ -1,10 +1,8 @@
 package industries.goodteam.gambit.action
 
-abstract class Action(
-    val name: String,
-    var cooldown: Int,
-    var start: Int = -1
-) {
+import industries.goodteam.gambit.effect.Effect
+
+sealed class Action(val name: String, var cooldown: Int, start: Int = -1) {
 
     var left = start
 
@@ -24,3 +22,18 @@ abstract class Action(
     fun ready(): Boolean = left < 0
 
 }
+
+// innate
+class Nothing : Action("nothing", -1, -1)
+
+// standard
+class Attack(name: String = "attack", cooldown: Int = 0, start: Int = -1) : Action(name, cooldown, start)
+class Defend(name: String = "defend", cooldown: Int = 1, start: Int = -1) : Action(name, cooldown, start)
+
+// control
+class Stun(name: String = "stun", cooldown: Int = 3, start: Int = -1) : Action(name, cooldown, start)
+
+// other
+class Steal(name: String = "steal", cooldown: Int = 0, start: Int = -1) : Action(name, cooldown, start)
+class Modify(name: String = "modify", val effect: Effect, cooldown: Int = 3, start: Int = -1) :
+    Action(name, cooldown, start)

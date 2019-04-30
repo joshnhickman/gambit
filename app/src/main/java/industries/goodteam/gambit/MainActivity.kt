@@ -1,5 +1,6 @@
 package industries.goodteam.gambit
 
+import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.text.Editable
@@ -10,9 +11,9 @@ import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import industries.goodteam.gambit.action.*
+import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.actor.Player
-import industries.goodteam.gambit.databinding.CombatBinding
 import industries.goodteam.gambit.effect.Effect
 import kotlinx.android.synthetic.main.combat.*
 import kotlinx.coroutines.GlobalScope
@@ -21,14 +22,15 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
 
+@SuppressLint("SetTextI18n")
 class MainActivity : AppCompatActivity() {
 
     private val log = AnkoLogger(this.javaClass)
 
-    private val attack = Attack(0)
-    private val defend = Defend(1)
-    private val stun = Stun(3)
-    private var steal = Steal(0)
+    private val attack = Attack(cooldown = 0)
+    private val defend = Defend(cooldown = 1)
+    private val stun = Stun(cooldown = 3)
+    private var steal = Steal(cooldown = 0)
 
     private lateinit var player: Player
     private lateinit var enemy: Actor
@@ -63,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         defendButton.onClick { act(defend) }
         defendCard = Card(this, defend, defendGuideline, defendButton)
         defendCardLayout.apply {
-            setOnLongClickListener { _ ->
+            setOnLongClickListener {
                 detailsName.text = "DEFEND"
                 detailsText.text = """
                     |*block ${player.actionValue(defend)} damage
@@ -83,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         attackButton.onClick { act(attack) }
         attackCard = Card(this, attack, attackGuideline, attackButton)
         attackCardLayout.apply {
-            setOnLongClickListener { _ ->
+            setOnLongClickListener {
                 detailsName.text = "ATTACK"
                 detailsText.text = """
                     |*deal ${player.actionValue(attack)} damage
@@ -104,7 +106,7 @@ class MainActivity : AppCompatActivity() {
         stunButton.onClick { act(stun) }
         stunCard = Card(this, stun, stunGuideline, stunButton)
         stunCardLayout.apply {
-            setOnLongClickListener { _ ->
+            setOnLongClickListener {
                 detailsName.text = "STUN"
                 detailsText.text = """
                     |*stun for ${player.actionValue(stun)} turn(s)
@@ -124,7 +126,7 @@ class MainActivity : AppCompatActivity() {
         stealButton.onClick { act(steal) }
         stealCard = Card(this, steal, stealGuideline, stealButton)
         stealCardLayout.apply {
-            setOnLongClickListener { _ ->
+            setOnLongClickListener {
                 detailsName.text = "STEAL"
                 detailsText.text = """
                     |*steal ${player.actionValue(steal)} gold
@@ -141,7 +143,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        waitButton.onClick { act(Wait()) }
+        waitButton.onClick { act(Nothing()) }
 
         playerDamageText.alpha = 0f
         enemyDamageText.alpha = 0f
@@ -250,7 +252,7 @@ class MainActivity : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(0), Defend(1))
+                actions = *arrayOf(Attack(cooldown = 0), Defend(cooldown = 1))
             ),
             Actor(
                 name = "defender",
@@ -260,7 +262,7 @@ class MainActivity : AppCompatActivity() {
                 accuracy = 3 + level,
                 armor = 20 + level,
                 reflexes = 5 + level,
-                actions = *arrayOf(Attack(1, 1), Defend(0))
+                actions = *arrayOf(Attack(cooldown = 1, start = 1), Defend(cooldown = 0))
             ),
             Actor(
                 name = "stunner",
@@ -271,7 +273,7 @@ class MainActivity : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(0), Stun(4, 2))
+                actions = *arrayOf(Attack(cooldown = 0), Stun(cooldown = 4, start = 2))
             ),
             Actor(
                 name = "damager",
@@ -281,7 +283,7 @@ class MainActivity : AppCompatActivity() {
                 accuracy = 15 + level,
                 armor = 5 + level,
                 reflexes = 2 + level,
-                actions = *arrayOf(Attack(4, 4), Defend(0))
+                actions = *arrayOf(Attack(cooldown = 4, start = 4), Defend(cooldown = 0))
             ),
             Actor(
                 name = "weakener",
@@ -292,7 +294,11 @@ class MainActivity : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(0), Defend(1), Modify(Effect(StatType.STRENGTH, -2 - level, 2), 2))
+                actions = *arrayOf(
+                    Attack(cooldown = 0),
+                    Defend(cooldown = 1),
+                    Modify(effect = Effect(StatType.STRENGTH, -2 - level, 2), cooldown = 2)
+                )
             )
         ).shuffled()
 
@@ -397,8 +403,8 @@ class MainActivity : AppCompatActivity() {
             events.add("you steal $stolen gold")
         }
 
-        if (player.intent is Wait) events.add("you do nothing")
-        if (enemy.intent is Wait) events.add("${enemy.name} does nothing")
+        if (player.intent is Nothing) events.add("you do nothing")
+        if (enemy.intent is Nothing) events.add("${enemy.name} does nothing")
 
         player.act()
         enemy.act()
@@ -428,13 +434,12 @@ class MainActivity : AppCompatActivity() {
             alert("defeated ${enemy.name}") { yesButton {} }.show()
             newCombat()
         } else if (!player.alive()) {
-            alert(
-                """
+            alert("""
                 |${enemy.name} defeated you
                 |stole ${player.gold} gold
                 |defeated ${defeated.size} enemies:
                 |${defeated.joinToString(",") { it.name }}
-            """.trimIndent()
+            """.trimMargin()
             ) { yesButton {} }.show()
             newGame()
         } else newRound()
@@ -494,7 +499,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // helper method to automatically set text as it's edited
-    fun EditText.afterTextChanged(afterTextChanged: (String) -> Unit) {
+    private fun EditText.afterTextChanged(afterTextChanged: (String) -> Unit) {
         this.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(editable: Editable) {
                 afterTextChanged.invoke(editable.toString())
@@ -506,7 +511,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // helper method to default non-int values to 0 when converting to a string
-    fun String.getIntWithBlank(): Int {
+    private fun String.getIntWithBlank(): Int {
         return try {
             this.toInt()
         } catch (e: NumberFormatException) {
