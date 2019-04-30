@@ -1,9 +1,7 @@
 package industries.goodteam.gambit
 
 import android.app.Activity
-import android.view.View
 import android.widget.Button
-import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.Guideline
 import industries.goodteam.gambit.action.Action
@@ -14,7 +12,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
 class Card(
-    val context: Activity,
+    val ctx: Activity,
     val action: Action,
     val guideline: Guideline,
     val button: Button
@@ -33,7 +31,7 @@ class Card(
     var animation: Job? = null
 
     fun animate() {
-        context.runOnUiThread { button.isEnabled = action.ready() }
+        ctx.runOnUiThread { button.isEnabled = action.ready() }
         var percent: Float = (guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
         var targetPercent = if (action.ready()) top else minOf(top + step * (action.left + 1), bottom)
         animation?.cancel()
@@ -41,7 +39,7 @@ class Card(
             while (percent != targetPercent) {
                 if (percent < targetPercent) percent += frame else if (percent > targetPercent) percent -= frame
                 if ((targetPercent - percent).absoluteValue < frame) percent = targetPercent
-                context.runOnUiThread { guideline.setGuidelinePercent(percent) }
+                ctx.runOnUiThread { guideline.setGuidelinePercent(percent) }
                 delay(delayMillis)
             }
         }

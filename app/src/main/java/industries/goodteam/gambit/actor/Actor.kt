@@ -1,8 +1,10 @@
 package industries.goodteam.gambit.actor
 
 import industries.goodteam.gambit.StatType
+import industries.goodteam.gambit.StatType.*
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.action.Nothing
+import industries.goodteam.gambit.action.Target
 import industries.goodteam.gambit.effect.AppliedEffect
 
 open class Actor(
@@ -56,7 +58,8 @@ open class Actor(
     }
 
     open fun act(action: Action = intent) {
-        intent.perform()
+//        val target = if (action.target == Target.SELF) this else
+        action.perform()
     }
 
     open fun defend(): Int {
@@ -94,15 +97,26 @@ open class Actor(
 
     private fun modifyStat(stat: StatType, value: Int) {
         when (stat) {
-            StatType.LUCK -> luck += value
-            StatType.VITALITY -> vitality += value
-            StatType.HEALTH -> health += value
-            StatType.STRENGTH -> strength += value
-            StatType.ACCURACY -> accuracy += value
-            StatType.ARMOR -> armor += value
-            StatType.REFLEXES -> reflexes += value
-            StatType.CONCENTRATION -> concentration += value
+            LUCK -> luck += value
+            VITALITY -> vitality += value
+            HEALTH -> health += value
+            STRENGTH -> strength += value
+            ACCURACY -> accuracy += value
+            ARMOR -> armor += value
+            REFLEXES -> reflexes += value
+            CONCENTRATION -> concentration += value
         }
+    }
+
+    fun stat(stat: StatType): Int = when(stat) {
+        LUCK -> luck
+        VITALITY -> vitality
+        HEALTH -> health
+        STRENGTH -> strength
+        ACCURACY -> accuracy
+        ARMOR -> armor
+        REFLEXES -> reflexes
+        CONCENTRATION -> concentration
     }
 
     open fun alive(): Boolean = health > 0
