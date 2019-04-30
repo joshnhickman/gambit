@@ -1,6 +1,7 @@
 package industries.goodteam.gambit
 
 import android.app.Activity
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -16,8 +17,7 @@ class Card(
     val context: Activity,
     val action: Action,
     val guideline: Guideline,
-    val button: Button,
-    val text: TextView
+    val button: Button
 ) {
 
     companion object {

@@ -7,7 +7,7 @@ import android.text.InputType
 import android.text.TextWatcher
 import android.view.MotionEvent
 import android.view.View
-import android.widget.*
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.actor.Actor
@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
     private var defeated = mutableListOf<Actor>()
 
-    private lateinit var binding: CombatBinding
+//    private lateinit var binding: CombatBinding
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
         detailsCard.visibility = View.GONE
 
         defendButton.onClick { act(defend) }
-        defendCard = Card(this, defend, find(R.id.defendGuideline), defendButton, defendText)
+        defendCard = Card(this, defend, defendGuideline, defendButton)
         defendCardLayout.apply {
             setOnLongClickListener { _ ->
                 detailsName.text = "DEFEND"
@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         attackButton.onClick { act(attack) }
-        attackCard = Card(this, attack, find(R.id.attackGuideline), attackButton, attackText)
+        attackCard = Card(this, attack, attackGuideline, attackButton)
         attackCardLayout.apply {
             setOnLongClickListener { _ ->
                 detailsName.text = "ATTACK"
@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         stunButton.onClick { act(stun) }
-        stunCard = Card(this, stun, find(R.id.stunGuideline), stunButton, stunText)
+        stunCard = Card(this, stun, stunGuideline, stunButton)
         stunCardLayout.apply {
             setOnLongClickListener { _ ->
                 detailsName.text = "STUN"
@@ -122,7 +122,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         stealButton.onClick { act(steal) }
-        stealCard = Card(this, steal, find(R.id.stealGuideline), stealButton, stealText)
+        stealCard = Card(this, steal, stealGuideline, stealButton)
         stealCardLayout.apply {
             setOnLongClickListener { _ ->
                 detailsName.text = "STEAL"
@@ -260,7 +260,8 @@ class MainActivity : AppCompatActivity() {
                 accuracy = 3 + level,
                 armor = 20 + level,
                 reflexes = 5 + level,
-                actions = *arrayOf(Attack(1, 1), Defend(0))),
+                actions = *arrayOf(Attack(1, 1), Defend(0))
+            ),
             Actor(
                 name = "stunner",
                 luck = 1,
@@ -270,7 +271,8 @@ class MainActivity : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(0), Stun(4, 2))),
+                actions = *arrayOf(Attack(0), Stun(4, 2))
+            ),
             Actor(
                 name = "damager",
                 luck = 1 + level,
@@ -279,7 +281,8 @@ class MainActivity : AppCompatActivity() {
                 accuracy = 15 + level,
                 armor = 5 + level,
                 reflexes = 2 + level,
-                actions = *arrayOf(Attack(4, 4), Defend(0))),
+                actions = *arrayOf(Attack(4, 4), Defend(0))
+            ),
             Actor(
                 name = "weakener",
                 luck = 1,
@@ -341,11 +344,12 @@ class MainActivity : AppCompatActivity() {
             events.add("you stunned ${enemy.name} for $duration turns")
         }
         if (enemy.intent is Stun) {
-            val duration = player.stun(enemy.concentration )
+            val duration = player.stun(enemy.concentration)
             events.add("${enemy.name} stunned you for $duration turns")
         }
 
-        if (player.intent is Modify) {}
+        if (player.intent is Modify) {
+        }
         if (enemy.intent is Modify) {
             val effect = (enemy.intent as Modify).effect.apply()
             player.affect(effect)
@@ -366,7 +370,7 @@ class MainActivity : AppCompatActivity() {
             GlobalScope.launch {
                 enemyDamageText.text = "$actualDamage"
                 enemyDamageText.alpha = 1.0f
-                while(enemyDamageText.alpha > 0) {
+                while (enemyDamageText.alpha > 0) {
                     runOnUiThread { enemyDamageText.alpha -= 0.01f }
                     delay(16)
                 }
@@ -380,7 +384,7 @@ class MainActivity : AppCompatActivity() {
             GlobalScope.launch {
                 playerDamageText.text = "$actualDamage"
                 playerDamageText.alpha = 1.0f
-                while(playerDamageText.alpha > 0) {
+                while (playerDamageText.alpha > 0) {
                     runOnUiThread { playerDamageText.alpha -= 0.01f }
                     delay(16)
                 }
@@ -424,12 +428,14 @@ class MainActivity : AppCompatActivity() {
             alert("defeated ${enemy.name}") { yesButton {} }.show()
             newCombat()
         } else if (!player.alive()) {
-            alert("""
+            alert(
+                """
                 |${enemy.name} defeated you
                 |stole ${player.gold} gold
                 |defeated ${defeated.size} enemies:
                 |${defeated.joinToString(",") { it.name }}
-            """.trimIndent()) { yesButton {} }.show()
+            """.trimIndent()
+            ) { yesButton {} }.show()
             newGame()
         } else newRound()
 
@@ -493,6 +499,7 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(editable: Editable) {
                 afterTextChanged.invoke(editable.toString())
             }
+
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
         })

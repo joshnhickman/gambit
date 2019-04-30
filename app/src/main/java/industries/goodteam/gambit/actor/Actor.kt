@@ -1,6 +1,5 @@
 package industries.goodteam.gambit.actor
 
-import androidx.lifecycle.ViewModel
 import industries.goodteam.gambit.StatType
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.effect.AppliedEffect
@@ -16,9 +15,7 @@ open class Actor(
     var reflexes: Int = 1,
     var concentration: Int = 1,
     vararg var actions: Action
-) : ViewModel() {
-
-    val log = AnkoLogger(this.javaClass)
+) {
 
     var health = vitality
     var shield = 0
@@ -47,9 +44,7 @@ open class Actor(
     }
 
     open fun endCombat() {
-        for (action in actions) {
-            action.refresh()
-        }
+        actions.forEach { it.refresh() }
     }
 
     open fun intend(action: Action? = null) {
@@ -98,7 +93,7 @@ open class Actor(
     }
 
     private fun modifyStat(stat: StatType, value: Int) {
-        when(stat) {
+        when (stat) {
             StatType.LUCK -> luck += value
             StatType.VITALITY -> vitality += value
             StatType.HEALTH -> health += value
@@ -115,11 +110,11 @@ open class Actor(
     open fun stunned(): Boolean = stunLeft > -1
 
     fun actionValue(action: Action = intent): IntRange {
-        return when(action) {
-            is Attack -> (if (accuracy < strength) accuracy*attackMultiplier else strength*attackMultiplier)..strength*attackMultiplier
+        return when (action) {
+            is Attack -> (if (accuracy < strength) accuracy * attackMultiplier else strength * attackMultiplier)..strength * attackMultiplier
             is Defend -> (if (reflexes < armor) reflexes else armor)..armor
             is Stun -> concentration..concentration
-            is Steal -> accuracy*10..reflexes*10
+            is Steal -> accuracy * 10..reflexes * 10
             is Wait -> stunLeft..stunLeft
             is Modify -> action.effect.value..action.effect.value
             else -> 0..0

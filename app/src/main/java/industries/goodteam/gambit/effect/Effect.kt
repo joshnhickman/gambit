@@ -9,6 +9,6 @@ class Effect(
     val duration: Int = 1
 ) {
 
-    fun apply(): AppliedEffect = AppliedEffect(targetStat, value, duration)
+    fun apply(): AppliedEffect = AppliedEffect(this)
 
 }
