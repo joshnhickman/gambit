@@ -1,10 +1,9 @@
 package industries.goodteam.gambit.actor
 
-import industries.goodteam.gambit.StatType
-import industries.goodteam.gambit.StatType.*
+import industries.goodteam.gambit.Stat
+import industries.goodteam.gambit.Stat.*
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.action.Nothing
-import industries.goodteam.gambit.action.Target
 import industries.goodteam.gambit.effect.AppliedEffect
 
 open class Actor(
@@ -19,6 +18,13 @@ open class Actor(
     vararg var actions: Action
 ) {
 
+    val nothing = Nothing()
+
+    init {
+        actions.forEach { it.actor = this }
+        nothing.actor = this
+    }
+
     var health = vitality
     var shield = 0
 
@@ -27,39 +33,42 @@ open class Actor(
     var intent = actions[0]
     var attackMultiplier = 1
 
-    private var stunLeft = -1
+    var stunLeft = -1
 
-    private var effects = mutableListOf<AppliedEffect>()
+    var effects = mutableListOf<AppliedEffect>()
 
-    open fun update() {
+    var acted = false
+
+
+    open fun act(action: Action = intent) {
+        if (!acted) {
+            action.perform()
+            acted = true
+        }
+    }
+
+    fun endRound() {
         shield = 0
-
-        actions.forEach { it.update() }
-
+        actions.forEach { it.endRound() }
         effects.removeAll {
             it.update()
             if (it.done()) modifyStat(it.targetStat, -it.value)
             it.done()
         }
-
         if (stunned()) stunLeft--
+        acted = false
     }
 
-    open fun endCombat() {
-        actions.forEach { it.refresh() }
+    fun endCombat() {
+        actions.forEach { it.endCombat() }
     }
 
     open fun intend(action: Action? = null) {
         intent = when {
-            stunned() -> Nothing()
+            stunned() -> nothing
             action != null -> action
             else -> actions.filter { it.ready() }.random()
         }
-    }
-
-    open fun act(action: Action = intent) {
-//        val target = if (action.target == Target.SELF) this else
-        action.perform()
     }
 
     open fun defend(): Int {
@@ -95,7 +104,7 @@ open class Actor(
 
     }
 
-    private fun modifyStat(stat: StatType, value: Int) {
+    private fun modifyStat(stat: Stat, value: Int) {
         when (stat) {
             LUCK -> luck += value
             VITALITY -> vitality += value
@@ -108,7 +117,7 @@ open class Actor(
         }
     }
 
-    fun stat(stat: StatType): Int = when(stat) {
+    fun stat(stat: Stat): Int = when (stat) {
         LUCK -> luck
         VITALITY -> vitality
         HEALTH -> health
@@ -123,15 +132,14 @@ open class Actor(
 
     open fun stunned(): Boolean = stunLeft > -1
 
-    fun actionValue(action: Action = intent): IntRange {
-        return when (action) {
-            is Attack -> (if (accuracy < strength) accuracy * attackMultiplier else strength * attackMultiplier)..strength * attackMultiplier
-            is Defend -> (if (reflexes < armor) reflexes else armor)..armor
-            is Stun -> concentration..concentration
-            is Steal -> accuracy * 10..reflexes * 10
-            is Nothing -> stunLeft..stunLeft
-            is Modify -> action.effect.value..action.effect.value
-        }
+    // TODO: remove when actions handle this
+    fun actionValue(action: Action = intent): IntRange = when (action) {
+        is Attack -> (if (accuracy < strength) accuracy * attackMultiplier else strength * attackMultiplier)..strength * attackMultiplier
+        is Defend -> (if (reflexes < armor) reflexes else armor)..armor
+        is Stun -> concentration..concentration
+        is Steal -> accuracy * 10..reflexes * 10
+        is Nothing -> stunLeft..stunLeft
+        is Modify -> action.effect.value..action.effect.value
     }
 
 }

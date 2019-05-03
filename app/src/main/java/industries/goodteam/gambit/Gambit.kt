@@ -14,6 +14,7 @@ import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.actor.Player
+import industries.goodteam.gambit.effect.Duration
 import industries.goodteam.gambit.effect.Effect
 import kotlinx.android.synthetic.main.combat.*
 import kotlinx.coroutines.GlobalScope
@@ -27,7 +28,7 @@ class Gambit : AppCompatActivity() {
 
     companion object {
 
-        private val log = AnkoLogger(this.javaClass)
+        private val log = AnkoLogger(this::class.java)
 
         val attack = Attack(cooldown = 0)
         val defend = Defend(cooldown = 1)
@@ -39,17 +40,19 @@ class Gambit : AppCompatActivity() {
 
         lateinit var enemies: List<Actor>
 
-        var events = mutableListOf<String>()
         var level = -1
         var combat = -1
         var round = -1
 
+        var events = mutableListOf<String>()
         var defeated = mutableListOf<Actor>()
 
         fun addEvent(message: String) {
             log.info("event: $message")
             events.add(message)
         }
+
+        fun opponent(actor: Actor): Actor = if (actor == player) enemy else player
 
     }
 
@@ -310,7 +313,7 @@ class Gambit : AppCompatActivity() {
                 actions = *arrayOf(
                     Attack(cooldown = 0),
                     Defend(cooldown = 1),
-                    Modify(effect = Effect(StatType.STRENGTH, -2 - level, 2), cooldown = 2)
+                    Modify(effect = Effect(Stat.STRENGTH, -2 - level, Duration(number = 2)), cooldown = 2)
                 )
             )
         ).shuffled()
@@ -332,11 +335,11 @@ class Gambit : AppCompatActivity() {
             addEvent("start combat $combat")
 
             round = -1
-            newRound()
+            startRound()
         } else startLevel()
     }
 
-    private fun newRound() {
+    private fun startRound() {
         round++
         addEvent("start round $round")
 
@@ -349,68 +352,35 @@ class Gambit : AppCompatActivity() {
     private fun act(action: Action) {
         player.intend(action)
 
-        if (player.intent is Stun) {
-            val duration = enemy.stun(player.concentration)
-            addEvent("you stunned ${enemy.name} for $duration turns")
-        }
-        if (enemy.intent is Stun) {
-            val duration = player.stun(enemy.concentration)
-            addEvent("${enemy.name} stunned you for $duration turns")
-        }
+        val pair = if (player.intent.compareTo(enemy.intent) >= 0) player to enemy else enemy to player
 
-        if (player.intent is Modify) { }
-        if (enemy.intent is Modify) {
-            val effect = (enemy.intent as Modify).effect.apply()
-            player.affect(effect)
-            addEvent("${enemy.name} modified your ${effect.targetStat} by ${effect.value}")
-        }
+        val prevPlayerHealth = player.health
+        val prevEnemyHealth = enemy.health
 
-        if (player.intent is Defend) {
-            val amt = player.defend()
-            addEvent("you prepare to defend $amt damage")
-        }
-        if (enemy.intent is Defend) addEvent("${enemy.name} prepares to defend ${enemy.defend()} damage")
+        pair.first.act()
+        pair.second.act()
 
-        if (player.alive() && player.intent is Attack) {
-            val damage = player.actionValue().random()
-            val actualDamage = enemy.damage(damage)
-            addEvent("you attack for $damage damage")
-            addEvent("${enemy.name} takes $actualDamage damage")
+        // TODO: find a way to signal the UI better
+        if (prevPlayerHealth > player.health) {
+            playerDamageText.text = "${prevPlayerHealth - player.health}"
+            playerDamageText.alpha = 1.0f
             GlobalScope.launch {
-                enemyDamageText.text = "$actualDamage"
-                enemyDamageText.alpha = 1.0f
-                while (enemyDamageText.alpha > 0) {
-                    runOnUiThread { enemyDamageText.alpha -= 0.01f }
-                    delay(16)
-                }
-            }
-        }
-        if (enemy.alive() && enemy.intent is Attack) {
-            val damage = enemy.actionValue().random()
-            val actualDamage = player.damage(damage)
-            addEvent("${enemy.name} attacks for $damage damage")
-            addEvent("you take $actualDamage damage")
-            GlobalScope.launch {
-                playerDamageText.text = "$actualDamage"
-                playerDamageText.alpha = 1.0f
                 while (playerDamageText.alpha > 0) {
                     runOnUiThread { playerDamageText.alpha -= 0.01f }
                     delay(16)
                 }
             }
         }
-
-        if (player.intent is Steal) {
-            val stolen = player.actionValue().random()
-            player.gold += stolen
-            addEvent("you steal $stolen gold")
+        if (prevEnemyHealth > enemy.health) {
+            enemyDamageText.text = "${prevEnemyHealth - enemy.health}"
+            enemyDamageText.alpha = 1.0f
+            GlobalScope.launch {
+                while (enemyDamageText.alpha > 0) {
+                    runOnUiThread { enemyDamageText.alpha -= 0.01f }
+                    delay(16)
+                }
+            }
         }
-
-        if (player.intent is Nothing) addEvent("you do nothing")
-        if (enemy.intent is Nothing) addEvent("${enemy.name} does nothing")
-
-        player.act()
-        enemy.act()
 
         animateCards()
 
@@ -424,8 +394,8 @@ class Gambit : AppCompatActivity() {
     }
 
     private fun endRound() {
-        player.update()
-        enemy.update()
+        player.endRound()
+        enemy.endRound()
 
         if (!enemy.alive()) {
             addEvent("${enemy.name} dies")
@@ -443,7 +413,7 @@ class Gambit : AppCompatActivity() {
             """.trimMargin()
             ) { yesButton {} }.show()
             startGame()
-        } else newRound()
+        } else startRound()
 
         animateCards()
     }

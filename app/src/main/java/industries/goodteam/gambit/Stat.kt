@@ -1,6 +1,6 @@
 package industries.goodteam.gambit
 
-enum class StatType {
+enum class Stat {
 
     LUCK,
     VITALITY,

@@ -4,6 +4,7 @@ import industries.goodteam.gambit.action.Action
 import industries.goodteam.gambit.actor.Actor
 
 sealed class Event(val message: String) {
+    companion object { }
     override fun toString(): String = message
 }
 
