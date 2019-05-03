@@ -15,6 +15,7 @@ import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.actor.Player
 import industries.goodteam.gambit.effect.Effect
+import industries.goodteam.gambit.event.*
 import kotlinx.android.synthetic.main.combat.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -227,14 +228,12 @@ class Gambit : AppCompatActivity() {
             stunButton.isEnabled = false
             stealButton.isEnabled = false
         }
-        EventBus.register {
-            println("draw after ${it::class.java.simpleName}")
-            if (it !is StartGame && it !is StartLevel) draw()
-        }
+        EventBus.register { if (it !is StartGame && it !is StartLevel) draw() }
 
         startGame()
     }
 
+    // TODO: need to clear all listeners without losing ui pieces
     private fun startGame() {
         EventBus.events.clear()
         defeated.clear()
@@ -345,8 +344,6 @@ class Gambit : AppCompatActivity() {
     private fun startCombat() {
         combat++
 
-        player.endCombat()
-
         if (combat < enemies.size) {
             enemy = enemies[combat]
             EventBus.post(EncounteredEnemy(enemy))
@@ -364,7 +361,13 @@ class Gambit : AppCompatActivity() {
         round++
         enemy.intend()
         EventBus.post(StartRound(round))
-        EventBus.post(ActionIntended(enemy.intent, enemy, player))
+        EventBus.post(
+            ActionIntended(
+                enemy.intent,
+                enemy,
+                player
+            )
+        )
     }
 
     private fun act(action: Action) {
@@ -383,9 +386,6 @@ class Gambit : AppCompatActivity() {
         GlobalScope.launch {
             delay(250)
             runOnUiThread {
-                player.endRound()
-                enemy.endRound()
-
                 if (!enemy.alive()) {
                     defeated.add(enemy)
                     EventBus.post(ActorDied(enemy))
@@ -419,7 +419,7 @@ class Gambit : AppCompatActivity() {
         }
 
         enemyNameText.text = enemy.name
-        enemyActionText.text = "${enemy.intent.describeShort()}"
+        enemyActionText.text = enemy.intent.describeShort()
 
         defendText.text = """
             |*${player.defend.describe()}

@@ -1,8 +1,10 @@
 package industries.goodteam.gambit.action
 
-import industries.goodteam.gambit.*
+import industries.goodteam.gambit.Gambit
+import industries.goodteam.gambit.Stat
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.effect.Effect
+import industries.goodteam.gambit.event.*
 
 sealed class Action(val name: String, val target: Target = Target.OPPONENT, var cooldown: Int, start: Int = -1) :
     Comparable<Action> {
@@ -12,21 +14,18 @@ sealed class Action(val name: String, val target: Target = Target.OPPONENT, var 
     lateinit var actor: Actor
     var left = start
 
-    fun endRound() {
-        if (!ready()) left--
-    }
-
-    fun endCombat() {
-        left = -1
+    init {
+        EventBus.register(FinishRound::class.java) { if (!ready()) left-- }
+        EventBus.register(FinishCombat::class.java) { left = -1 }
     }
 
     fun ready(): Boolean = left < 0
 
     fun perform() {
         if (actor.alive() && ready()) {
+            left = cooldown
             EventBus.post(ActionPerformed(this, actor, target()))
             act()
-            left = cooldown
         }
     }
 
@@ -51,7 +50,6 @@ sealed class Action(val name: String, val target: Target = Target.OPPONENT, var 
     override fun toString(): String = name
 }
 
-// innate
 class Nothing : Action(name = "nothing", target = Target.SELF, cooldown = -1) {
     override val priority = 99
 
@@ -60,7 +58,7 @@ class Nothing : Action(name = "nothing", target = Target.SELF, cooldown = -1) {
     }
 
     override fun describe(): String = "do nothing"
-    override fun describeShort(): String = "nothing ${if (actor.stunned()) actor.stunLeft else ""}"
+    override fun describeShort(): String = "nothing${if (actor.stunned()) " ${actor.stunLeft}" else ""}"
 
 }
 
@@ -68,12 +66,18 @@ class Stun(name: String = "stun", cooldown: Int = 3, start: Int = -1) :
     Action(name = name, cooldown = cooldown, start = start) {
     override val priority = 1
 
-    val stat = Stat.CONCENTRATION
+    private val stat = Stat.CONCENTRATION
 
     override fun act() {
         val duration = range(stat).random()
         target().stun(duration)
-        EventBus.post(ActorStunned(this, target(), duration))
+        EventBus.post(
+            ActorStunned(
+                this,
+                target(),
+                duration
+            )
+        )
     }
 
     override fun describe(): String = "stun for ${actor.stat(stat)} turns"
@@ -87,7 +91,13 @@ class Modify(name: String = "modify", val effect: Effect, cooldown: Int = 3, sta
     override fun act() {
         val appliedEffect = effect.apply()
         target().affect(appliedEffect)
-        EventBus.post(ActorModified(this, target(), appliedEffect.value))
+        EventBus.post(
+            ActorModified(
+                this,
+                target(),
+                appliedEffect.value
+            )
+        )
     }
 
     override fun describe(): String = "modify ${effect.targetStat} by ${effect.value}"
@@ -99,13 +109,19 @@ class Defend(name: String = "defend", cooldown: Int = 1, start: Int = -1) :
 
     override val priority = 3
 
-    val from = Stat.REFLEXES
-    val to = Stat.ARMOR
+    private val from = Stat.REFLEXES
+    private val to = Stat.ARMOR
 
     override fun act() {
         val amount = range(from, to).random()
         target().shield += amount
-        EventBus.post(ActorDefended(this, actor, amount))
+        EventBus.post(
+            ActorDefended(
+                this,
+                actor,
+                amount
+            )
+        )
     }
 
     override fun describe(): String = "defend ${range(from, to)} damage"
@@ -117,12 +133,18 @@ class Attack(name: String = "attack", cooldown: Int = 0, start: Int = -1) :
 
     override val priority = 4
 
-    val from = Stat.ACCURACY
-    val to = Stat.STRENGTH
+    private val from = Stat.ACCURACY
+    private val to = Stat.STRENGTH
 
     override fun act() {
         val amount = range(Stat.ACCURACY, Stat.STRENGTH).random()
-        EventBus.post(ActorAttacked(this, actor, amount))
+        EventBus.post(
+            ActorAttacked(
+                this,
+                actor,
+                amount
+            )
+        )
         target().damage(amount)
     }
 
@@ -135,8 +157,8 @@ class Steal(name: String = "steal", cooldown: Int = 0, start: Int = -1) :
     Action(name = name, cooldown = cooldown, start = start) {
     override val priority = 5
 
-    val from = Stat.REFLEXES
-    val to = Stat.ACCURACY
+    private val from = Stat.REFLEXES
+    private val to = Stat.ACCURACY
 
     override fun act() {
         val stolen = range(from, to, 10).random()
