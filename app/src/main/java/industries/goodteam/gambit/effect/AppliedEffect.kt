@@ -1,10 +1,10 @@
 package industries.goodteam.gambit.effect
 
-import industries.goodteam.gambit.StatType
+import industries.goodteam.gambit.Stat
 
 class AppliedEffect(
     val effect: Effect,
-    val targetStat: StatType = effect.targetStat,
+    val targetStat: Stat = effect.targetStat,
     val value: Int = effect.value,
     val duration: Int = effect.duration,
     var left: Int = duration

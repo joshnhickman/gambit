@@ -1,20 +1,16 @@
 package industries.goodteam.gambit
 
 import android.app.Activity
-import android.view.View
 import android.widget.Button
-import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.Guideline
 import industries.goodteam.gambit.action.Action
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import industries.goodteam.gambit.event.*
+import kotlinx.coroutines.*
 import kotlin.math.absoluteValue
 
 class Card(
-    val context: Activity,
+    val ctx: Activity,
     val action: Action,
     val guideline: Guideline,
     val button: Button
@@ -30,19 +26,34 @@ class Card(
         const val frame = 0.01f
     }
 
-    var animation: Job? = null
+    init {
+        EventBus.register(
+            StartCombat::class.java,
+            StartRound::class.java,
+            FinishRound::class.java,
+            ActionPerformed::class.java
+        ) {
+            if (it is ActionPerformed && it.action == action) animate()
+            else if (it !is ActionPerformed) animate()
+        }
+    }
 
-    fun animate() {
-        context.runOnUiThread { button.isEnabled = action.ready() }
+    private var animation: Job? = null
+
+    private fun animate() {
+        ctx.runOnUiThread { button.isEnabled = action.ready() }
         var percent: Float = (guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
         var targetPercent = if (action.ready()) top else minOf(top + step * (action.left + 1), bottom)
-        animation?.cancel()
+
+        GlobalScope.launch { animation?.join() }
         animation = GlobalScope.launch {
-            while (percent != targetPercent) {
-                if (percent < targetPercent) percent += frame else if (percent > targetPercent) percent -= frame
-                if ((targetPercent - percent).absoluteValue < frame) percent = targetPercent
-                context.runOnUiThread { guideline.setGuidelinePercent(percent) }
-                delay(delayMillis)
+            withTimeout(250) {
+                while (percent != targetPercent) {
+                    if (percent < targetPercent) percent += frame else if (percent > targetPercent) percent -= frame
+                    if ((targetPercent - percent).absoluteValue < frame) percent = targetPercent
+                    ctx.runOnUiThread { guideline.setGuidelinePercent(percent) }
+                    delay(delayMillis)
+                }
             }
         }
     }

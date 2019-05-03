@@ -7,7 +7,7 @@ class EventTest {
 
     @Test
     fun constructor_works() {
-        val event = NewCombat(3)
+        val event = StartCombat(3)
         assertEquals(event.number, 3)
     }
 }

@@ -1,5 +1,6 @@
 package industries.goodteam.gambit
 
+import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.text.Editable
@@ -10,10 +11,11 @@ import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import industries.goodteam.gambit.action.*
+import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.actor.Player
-import industries.goodteam.gambit.databinding.CombatBinding
 import industries.goodteam.gambit.effect.Effect
+import industries.goodteam.gambit.event.*
 import kotlinx.android.synthetic.main.combat.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -21,38 +23,44 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
 
-class MainActivity : AppCompatActivity() {
+@SuppressLint("SetTextI18n") // ignore warnings for setting strings outside of resources
+class Gambit : AppCompatActivity() {
 
-    private val log = AnkoLogger(this.javaClass)
+    companion object {
 
-    private val attack = Attack(0)
-    private val defend = Defend(1)
-    private val stun = Stun(3)
-    private var steal = Steal(0)
+        private val log = AnkoLogger(this::class.java)
 
-    private lateinit var player: Player
-    private lateinit var enemy: Actor
+        val attack = Attack(cooldown = 0)
+        val defend = Defend(cooldown = 1)
+        val stun = Stun(cooldown = 3)
+        var steal = Steal(cooldown = 0)
 
-    private lateinit var enemies: List<Actor>
+        lateinit var player: Player
+        lateinit var enemy: Actor
+
+        lateinit var enemies: List<Actor>
+
+        var level = -1
+        var combat = -1
+        var round = -1
+
+        var defeated = mutableListOf<Actor>()
+
+        fun opponent(actor: Actor): Actor = if (actor == player) enemy else player
+
+    }
 
     private lateinit var defendCard: Card
     private lateinit var attackCard: Card
     private lateinit var stunCard: Card
     private lateinit var stealCard: Card
 
-    private var events = mutableListOf<String>()
-    private var level = 0
-    private var combat = -1
-    private var round = 0
-
-    private var defeated = mutableListOf<Actor>()
-
 //    private lateinit var binding: CombatBinding
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // set fullscreen options
+        // force fullscreen portrait
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         supportActionBar?.hide()
 
@@ -63,10 +71,10 @@ class MainActivity : AppCompatActivity() {
         defendButton.onClick { act(defend) }
         defendCard = Card(this, defend, defendGuideline, defendButton)
         defendCardLayout.apply {
-            setOnLongClickListener { _ ->
+            setOnLongClickListener {
                 detailsName.text = "DEFEND"
                 detailsText.text = """
-                    |*block ${player.actionValue(defend)} damage
+                    |*${player.defend.describe()}
                     |*${defend.cooldown} turn cooldown
                 """.trimMargin()
                 detailsCard.visibility = View.VISIBLE
@@ -83,10 +91,10 @@ class MainActivity : AppCompatActivity() {
         attackButton.onClick { act(attack) }
         attackCard = Card(this, attack, attackGuideline, attackButton)
         attackCardLayout.apply {
-            setOnLongClickListener { _ ->
+            setOnLongClickListener {
                 detailsName.text = "ATTACK"
                 detailsText.text = """
-                    |*deal ${player.actionValue(attack)} damage
+                    |*${player.attack.describe()}
                     |*damage increases with consecutive attacks
                     |*${attack.cooldown} turn cooldown
                 """.trimMargin()
@@ -104,10 +112,10 @@ class MainActivity : AppCompatActivity() {
         stunButton.onClick { act(stun) }
         stunCard = Card(this, stun, stunGuideline, stunButton)
         stunCardLayout.apply {
-            setOnLongClickListener { _ ->
+            setOnLongClickListener {
                 detailsName.text = "STUN"
                 detailsText.text = """
-                    |*stun for ${player.actionValue(stun)} turn(s)
+                    |*${player.stun.describe()}
                     |*${stun.cooldown} turn cooldown
                 """.trimMargin()
                 detailsCard.visibility = View.VISIBLE
@@ -124,10 +132,10 @@ class MainActivity : AppCompatActivity() {
         stealButton.onClick { act(steal) }
         stealCard = Card(this, steal, stealGuideline, stealButton)
         stealCardLayout.apply {
-            setOnLongClickListener { _ ->
+            setOnLongClickListener {
                 detailsName.text = "STEAL"
                 detailsText.text = """
-                    |*steal ${player.actionValue(steal)} gold
+                    |*${player.steal.describe()}
                     |*${steal.cooldown} turn cooldown
                 """.trimMargin()
                 detailsCard.visibility = View.VISIBLE
@@ -141,7 +149,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        waitButton.onClick { act(Wait()) }
+        waitButton.onClick { act(Nothing()) }
 
         playerDamageText.alpha = 0f
         enemyDamageText.alpha = 0f
@@ -149,7 +157,7 @@ class MainActivity : AppCompatActivity() {
         // debug buttons
         restartButton.onClick {
             log.info("player requested new game")
-            newGame()
+            startGame()
         }
         editButton.onClick {
             alert("Edit Stats") {
@@ -200,14 +208,36 @@ class MainActivity : AppCompatActivity() {
             }.show()
         }
 
-        newGame()
+        // animate pieces of the UI when certain events happen
+        EventBus.register(ActorDamaged::class.java) {
+            if (it is ActorDamaged) {
+                val damageText = if (it.target == player) playerDamageText else enemyDamageText
+                damageText.text = "${it.value}"
+                damageText.alpha = 1.0f
+                GlobalScope.launch {
+                    while (damageText.alpha > 0) {
+                        runOnUiThread { damageText.alpha -= 0.01f }
+                        delay(16)
+                    }
+                }
+            }
+        }
+        EventBus.register(FinishRound::class.java) {
+            defendButton.isEnabled = false
+            attackButton.isEnabled = false
+            stunButton.isEnabled = false
+            stealButton.isEnabled = false
+        }
+        EventBus.register { if (it !is StartGame && it !is StartLevel) draw() }
+
+        startGame()
     }
 
-    private fun newGame() {
-        log.info("start new game")
-        level = 0
-        events.clear()
+    // TODO: need to clear all listeners without losing ui pieces
+    private fun startGame() {
+        EventBus.events.clear()
         defeated.clear()
+
         player = Player(
             luck = 1,
             vitality = 40,
@@ -222,10 +252,15 @@ class MainActivity : AppCompatActivity() {
             steal = steal
         )
 
-        newLevel()
+        EventBus.post(StartGame())
+
+        level = -1
+        startLevel()
     }
 
-    private fun newLevel() {
+    private fun startLevel() {
+        level++
+
         if (level > 0) {
             val cost = level * 50
             alert("heal ${player.vitality / 2} health for $cost gold?") {
@@ -239,7 +274,7 @@ class MainActivity : AppCompatActivity() {
                 noButton {}
             }.show()
         }
-        combat = 0
+
         enemies = mutableListOf(
             Actor(
                 name = "generic",
@@ -250,7 +285,7 @@ class MainActivity : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(0), Defend(1))
+                actions = *arrayOf(Attack(cooldown = 0), Defend(cooldown = 1))
             ),
             Actor(
                 name = "defender",
@@ -260,7 +295,7 @@ class MainActivity : AppCompatActivity() {
                 accuracy = 3 + level,
                 armor = 20 + level,
                 reflexes = 5 + level,
-                actions = *arrayOf(Attack(1, 1), Defend(0))
+                actions = *arrayOf(Attack(cooldown = 1, start = 1), Defend(cooldown = 0))
             ),
             Actor(
                 name = "stunner",
@@ -271,7 +306,7 @@ class MainActivity : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(0), Stun(4, 2))
+                actions = *arrayOf(Attack(cooldown = 0), Stun(cooldown = 4, start = 2))
             ),
             Actor(
                 name = "damager",
@@ -281,7 +316,7 @@ class MainActivity : AppCompatActivity() {
                 accuracy = 15 + level,
                 armor = 5 + level,
                 reflexes = 2 + level,
-                actions = *arrayOf(Attack(4, 4), Defend(0))
+                actions = *arrayOf(Attack(cooldown = 4, start = 4), Defend(cooldown = 0))
             ),
             Actor(
                 name = "weakener",
@@ -292,164 +327,85 @@ class MainActivity : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(0), Defend(1), Modify(Effect(StatType.STRENGTH, -2 - level, 2), 2))
+                actions = *arrayOf(
+                    Attack(cooldown = 0),
+                    Defend(cooldown = 1),
+                    Modify(effect = Effect(Stat.STRENGTH, -2 - level, 2), cooldown = 2)
+                )
             )
         ).shuffled()
 
-        newCombat()
+        EventBus.post(StartLevel(level))
+
+        combat = -1
+        startCombat()
     }
 
-    private fun newCombat() {
-        log.info("start new combat")
-        player.endCombat()
-
+    private fun startCombat() {
         combat++
 
-        defendCard.animate()
-        attackCard.animate()
-        stunCard.animate()
-        stealCard.animate()
+        if (combat < enemies.size) {
+            enemy = enemies[combat]
+            EventBus.post(EncounteredEnemy(enemy))
+            EventBus.post(StartCombat(combat))
 
-        if (combat == enemies.size + 1) {
-            longToast("level $level complete, advancing")
-            level++
-            newLevel()
+            round = -1
+            startRound()
         } else {
-            enemy = enemies[combat - 1]
-            events.add("encountered enemy ${enemy.name}")
-            events.add("++ start combat $combat ++")
-
-            round = 0
-            newRound()
+            EventBus.post(FinishLevel(level))
+            startLevel()
         }
     }
 
-    private fun newRound() {
-        log.info("start new round")
+    private fun startRound() {
         round++
-        events.add("-- start round $round --")
-
         enemy.intend()
-        events.add("${enemy.name} intends to ${enemy.intent.name} ${enemy.actionValue()}")
-
-        draw()
+        EventBus.post(StartRound(round))
+        EventBus.post(
+            ActionIntended(
+                enemy.intent,
+                enemy,
+                player
+            )
+        )
     }
 
     private fun act(action: Action) {
-        log.info("act $action")
         player.intend(action)
 
-        if (player.intent is Stun) {
-            val duration = enemy.stun(player.concentration)
-            events.add("you stunned ${enemy.name} for $duration turns")
-        }
-        if (enemy.intent is Stun) {
-            val duration = player.stun(enemy.concentration)
-            events.add("${enemy.name} stunned you for $duration turns")
-        }
+        val order = if (player.intent >= enemy.intent) player to enemy else enemy to player
 
-        if (player.intent is Modify) {
-        }
-        if (enemy.intent is Modify) {
-            val effect = (enemy.intent as Modify).effect.apply()
-            player.affect(effect)
-            events.add("${enemy.name} modified your ${effect.targetStat} by ${effect.value}")
-        }
+        order.first.act()
+        order.second.act()
 
-        if (player.intent is Defend) {
-            val amt = player.defend()
-            events.add("you prepare to defend $amt damage")
-        }
-        if (enemy.intent is Defend) events.add("${enemy.name} prepares to defend ${enemy.defend()} damage")
-
-        if (player.alive() && player.intent is Attack) {
-            val damage = player.actionValue().random()
-            val actualDamage = enemy.damage(damage)
-            events.add("you attack for $damage damage")
-            events.add("${enemy.name} takes $actualDamage damage")
-            GlobalScope.launch {
-                enemyDamageText.text = "$actualDamage"
-                enemyDamageText.alpha = 1.0f
-                while (enemyDamageText.alpha > 0) {
-                    runOnUiThread { enemyDamageText.alpha -= 0.01f }
-                    delay(16)
-                }
-            }
-        }
-        if (enemy.alive() && enemy.intent is Attack) {
-            val damage = enemy.actionValue().random()
-            val actualDamage = player.damage(damage)
-            events.add("${enemy.name} attacks for $damage damage")
-            events.add("you take $actualDamage damage")
-            GlobalScope.launch {
-                playerDamageText.text = "$actualDamage"
-                playerDamageText.alpha = 1.0f
-                while (playerDamageText.alpha > 0) {
-                    runOnUiThread { playerDamageText.alpha -= 0.01f }
-                    delay(16)
-                }
-            }
-        }
-
-        if (player.intent is Steal) {
-            val stolen = player.actionValue().random()
-            player.gold += stolen
-            events.add("you steal $stolen gold")
-        }
-
-        if (player.intent is Wait) events.add("you do nothing")
-        if (enemy.intent is Wait) events.add("${enemy.name} does nothing")
-
-        player.act()
-        enemy.act()
-
-        defendCard.animate()
-        attackCard.animate()
-        stunCard.animate()
-        stealCard.animate()
-
-        enableButtons(false)
-        draw()
-
-        GlobalScope.launch {
-            delay(250)
-            runOnUiThread { endRound() }
-        }
+        endRound()
     }
 
     private fun endRound() {
-        player.update()
-        enemy.update()
-
-        if (!enemy.alive()) {
-            events.add("${enemy.name} dies")
-            events.add("++ end combat $combat ++")
-            defeated.add(enemy)
-            alert("defeated ${enemy.name}") { yesButton {} }.show()
-            newCombat()
-        } else if (!player.alive()) {
-            alert(
-                """
-                |${enemy.name} defeated you
-                |stole ${player.gold} gold
-                |defeated ${defeated.size} enemies:
-                |${defeated.joinToString(",") { it.name }}
-            """.trimIndent()
-            ) { yesButton {} }.show()
-            newGame()
-        } else newRound()
-
-        defendCard.animate()
-        attackCard.animate()
-        stunCard.animate()
-        stealCard.animate()
-    }
-
-    private fun enableButtons(enabled: Boolean = true) {
-        defendButton.isEnabled = enabled
-        attackButton.isEnabled = enabled
-        stunButton.isEnabled = enabled
-        stealButton.isEnabled = enabled
+        EventBus.post(FinishRound(round))
+        GlobalScope.launch {
+            delay(250)
+            runOnUiThread {
+                if (!enemy.alive()) {
+                    defeated.add(enemy)
+                    EventBus.post(ActorDied(enemy))
+                    EventBus.post(FinishCombat(combat))
+                    alert("defeated ${enemy.name}") { yesButton {} }.show()
+                    startCombat()
+                } else if (!player.alive()) {
+                    alert(
+                        """
+                        |${enemy.name} defeated you
+                        |ended on level $level, combat $combat, round $round
+                        |ended with ${player.gold} gold
+                        |defeated ${defeated.size} enemies:
+                        |${defeated.joinToString(", ") { it.name }}
+                    """.trimMargin()
+                    ) { yesButton {} }.show()
+                    startGame()
+                } else startRound()
+            }
+        }
     }
 
     private fun draw() {
@@ -463,23 +419,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         enemyNameText.text = enemy.name
-        enemyActionText.text = "${enemy.intent.name} ${enemy.actionValue()}"
+        enemyActionText.text = enemy.intent.describeShort()
 
         defendText.text = """
-            |*block ${player.actionValue(defend)} damage
+            |*${player.defend.describe()}
             |*${defend.cooldown} turn cooldown
         """.trimMargin()
         attackText.text = """
-            |*deal ${player.actionValue(attack)} damage
+            |*${player.attack.describe()}
             |*damage increases with consecutive attacks
             |*${attack.cooldown} turn cooldown
         """.trimMargin()
         stunText.text = """
-            |*stun for ${player.actionValue(stun)} turn(s)
+            |*${player.stun.describe()}
             |*${stun.cooldown} turn cooldown
         """.trimMargin()
         stealText.text = """
-            |*steal ${player.actionValue(steal)} gold
+            |*${player.steal.describe()}
             |*${steal.cooldown} turn cooldown
         """.trimMargin()
 
@@ -488,13 +444,13 @@ class MainActivity : AppCompatActivity() {
 
         goldText.text = "GOLD: ${player.gold}"
 
-        eventsText.text = events.takeLast(10).joinToString("\n")
+        eventsText.text = EventBus.events.takeLast(10).joinToString("\n") { it.message }
 
         waitButton.visibility = if (player.stunned()) View.VISIBLE else View.GONE
     }
 
     // helper method to automatically set text as it's edited
-    fun EditText.afterTextChanged(afterTextChanged: (String) -> Unit) {
+    private fun EditText.afterTextChanged(afterTextChanged: (String) -> Unit) {
         this.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(editable: Editable) {
                 afterTextChanged.invoke(editable.toString())
@@ -506,7 +462,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // helper method to default non-int values to 0 when converting to a string
-    fun String.getIntWithBlank(): Int {
+    private fun String.getIntWithBlank(): Int {
         return try {
             this.toInt()
         } catch (e: NumberFormatException) {

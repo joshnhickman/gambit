@@ -1,6 +1,6 @@
 package industries.goodteam.gambit
 
-enum class StatType {
+enum class Stat {
 
     LUCK,
     VITALITY,
@@ -9,6 +9,8 @@ enum class StatType {
     ACCURACY,
     ARMOR,
     REFLEXES,
-    CONCENTRATION
+    CONCENTRATION;
+
+    override fun toString(): String = name.toLowerCase()
 
 }
