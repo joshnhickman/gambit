@@ -11,7 +11,7 @@ object EventBus {
 
     var events: MutableList<Event> = mutableListOf()
 
-    fun register(vararg eventTypes: Class<out Event> = arrayOf(Event::class.java), test: (Event) -> Unit) {
+    fun register(vararg eventTypes: Class<out Event> = arrayOf(Event::class.java), function: (Event) -> Unit) {
         eventTypes.forEach { eventType ->
             if (!listeners.containsKey(eventType)) listeners[eventType] = mutableListOf(function)
             else listeners[eventType]?.add(function)

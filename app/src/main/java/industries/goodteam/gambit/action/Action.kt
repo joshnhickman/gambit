@@ -1,10 +1,8 @@
 package industries.goodteam.gambit.action
 
-import industries.goodteam.gambit.Gambit
-import industries.goodteam.gambit.Stat
+import industries.goodteam.gambit.*
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.effect.Effect
-import industries.goodteam.gambit.event.*
 
 sealed class Action(val name: String, val target: Target = Target.OPPONENT, var cooldown: Int, start: Int = -1) :
     Comparable<Action> {

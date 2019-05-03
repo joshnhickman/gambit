@@ -1,7 +1,6 @@
 package industries.goodteam.gambit.effect
 
 import industries.goodteam.gambit.Stat
-import industries.goodteam.gambit.actor.Actor
 
 // TODO: make this abstract for other effects
 class Effect(
