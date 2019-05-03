@@ -9,6 +9,8 @@ enum class Stat {
     ACCURACY,
     ARMOR,
     REFLEXES,
-    CONCENTRATION
+    CONCENTRATION;
+
+    override fun toString(): String = name.toLowerCase()
 
 }

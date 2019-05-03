@@ -11,17 +11,18 @@ object EventBus {
 
     var events: MutableList<Event> = mutableListOf()
 
-    fun register(vararg eventTypes: Class<out Event>, test: (Event) -> Unit) {
+    fun register(vararg eventTypes: Class<out Event> = arrayOf(Event::class.java), test: (Event) -> Unit) {
         eventTypes.forEach { eventType ->
-            if (!listeners.containsKey(eventType)) listeners.put(eventType, mutableListOf(test))
-            else listeners.get(eventType)?.add(test)
+            if (!listeners.containsKey(eventType)) listeners[eventType] = mutableListOf(test)
+            else listeners[eventType]?.add(test)
         }
     }
 
     fun post(event: Event) {
         log.info("${event::class.java.simpleName}: ${event.message}")
         events.add(event)
-        if (listeners.containsKey(event::class.java)) listeners.get(event::class.java)?.forEach { it(event) }
+        listeners[event::class.java]?.forEach { it(event) }
+        listeners[Event::class.java]?.forEach { it(event) }
     }
 
 }

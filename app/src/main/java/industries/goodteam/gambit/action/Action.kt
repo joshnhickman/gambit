@@ -33,6 +33,7 @@ sealed class Action(val name: String, val target: Target = Target.OPPONENT, var 
     open fun act() {}
 
     abstract fun describe(): String
+    abstract fun describeShort(): String
 
     fun target(): Actor = if (target == Target.SELF) actor else Gambit.opponent(actor)
 
@@ -59,6 +60,7 @@ class Nothing : Action(name = "nothing", target = Target.SELF, cooldown = -1) {
     }
 
     override fun describe(): String = "do nothing"
+    override fun describeShort(): String = "nothing ${if (actor.stunned()) actor.stunLeft else ""}"
 
 }
 
@@ -74,7 +76,8 @@ class Stun(name: String = "stun", cooldown: Int = 3, start: Int = -1) :
         EventBus.post(ActorStunned(this, target(), duration))
     }
 
-    override fun describe(): String = "stun for $stat turns"
+    override fun describe(): String = "stun for ${actor.stat(stat)} turns"
+    override fun describeShort(): String = "stun ${actor.stat(stat)}"
 }
 
 class Modify(name: String = "modify", val effect: Effect, cooldown: Int = 3, start: Int = -1) :
@@ -84,10 +87,11 @@ class Modify(name: String = "modify", val effect: Effect, cooldown: Int = 3, sta
     override fun act() {
         val appliedEffect = effect.apply()
         target().affect(appliedEffect)
-        EventBus.post(ActorModified(this, actor, appliedEffect.value))
+        EventBus.post(ActorModified(this, target(), appliedEffect.value))
     }
 
     override fun describe(): String = "modify ${effect.targetStat} by ${effect.value}"
+    override fun describeShort(): String = "modify ${effect.targetStat} ${effect.value}"
 }
 
 class Defend(name: String = "defend", cooldown: Int = 1, start: Int = -1) :
@@ -105,6 +109,7 @@ class Defend(name: String = "defend", cooldown: Int = 1, start: Int = -1) :
     }
 
     override fun describe(): String = "defend ${range(from, to)} damage"
+    override fun describeShort(): String = "defend ${range(from, to)}"
 }
 
 class Attack(name: String = "attack", cooldown: Int = 0, start: Int = -1) :
@@ -122,6 +127,7 @@ class Attack(name: String = "attack", cooldown: Int = 0, start: Int = -1) :
     }
 
     override fun describe(): String = "attack for ${range(from, to)} damage"
+    override fun describeShort(): String = "attack ${range(from, to)}"
 
 }
 
@@ -139,5 +145,6 @@ class Steal(name: String = "steal", cooldown: Int = 0, start: Int = -1) :
     }
 
     override fun describe(): String = "steal ${range(from, to, 10)} gold"
+    override fun describeShort(): String = "steal ${range(from, to, 10)}"
 
 }

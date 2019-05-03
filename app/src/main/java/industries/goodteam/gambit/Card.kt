@@ -28,6 +28,10 @@ class Card(
         const val frame = 0.01f
     }
 
+    init {
+        EventBus.register(StartCombat::class.java, StartRound::class.java, FinishRound::class.java) { animate() }
+    }
+
     var animation: Job? = null
 
     fun animate() {

@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk27.coroutines.onClick
 
-@SuppressLint("SetTextI18n")
+@SuppressLint("SetTextI18n") // ignore warnings for setting strings outside of resources
 class Gambit : AppCompatActivity() {
 
     companion object {
@@ -59,7 +59,7 @@ class Gambit : AppCompatActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // set fullscreen options
+        // force fullscreen portrait
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         supportActionBar?.hide()
 
@@ -73,7 +73,7 @@ class Gambit : AppCompatActivity() {
             setOnLongClickListener {
                 detailsName.text = "DEFEND"
                 detailsText.text = """
-                    |*block ${player.actionValue(defend)} damage
+                    |*${player.defend.describe()}
                     |*${defend.cooldown} turn cooldown
                 """.trimMargin()
                 detailsCard.visibility = View.VISIBLE
@@ -93,7 +93,7 @@ class Gambit : AppCompatActivity() {
             setOnLongClickListener {
                 detailsName.text = "ATTACK"
                 detailsText.text = """
-                    |*deal ${player.actionValue(attack)} damage
+                    |*${player.attack.describe()}
                     |*damage increases with consecutive attacks
                     |*${attack.cooldown} turn cooldown
                 """.trimMargin()
@@ -114,7 +114,7 @@ class Gambit : AppCompatActivity() {
             setOnLongClickListener {
                 detailsName.text = "STUN"
                 detailsText.text = """
-                    |*stun for ${player.actionValue(stun)} turn(s)
+                    |*${player.stun.describe()}
                     |*${stun.cooldown} turn cooldown
                 """.trimMargin()
                 detailsCard.visibility = View.VISIBLE
@@ -134,7 +134,7 @@ class Gambit : AppCompatActivity() {
             setOnLongClickListener {
                 detailsName.text = "STEAL"
                 detailsText.text = """
-                    |*steal ${player.actionValue(steal)} gold
+                    |*${player.steal.describe()}
                     |*${steal.cooldown} turn cooldown
                 """.trimMargin()
                 detailsCard.visibility = View.VISIBLE
@@ -221,12 +221,21 @@ class Gambit : AppCompatActivity() {
                 }
             }
         }
+        EventBus.register(FinishRound::class.java) {
+            defendButton.isEnabled = false
+            attackButton.isEnabled = false
+            stunButton.isEnabled = false
+            stealButton.isEnabled = false
+        }
+        EventBus.register {
+            println("draw after ${it::class.java.simpleName}")
+            if (it !is StartGame && it !is StartLevel) draw()
+        }
 
         startGame()
     }
 
     private fun startGame() {
-        EventBus.post(StartGame())
         EventBus.events.clear()
         defeated.clear()
 
@@ -244,13 +253,14 @@ class Gambit : AppCompatActivity() {
             steal = steal
         )
 
+        EventBus.post(StartGame())
+
         level = -1
         startLevel()
     }
 
     private fun startLevel() {
         level++
-        EventBus.post(StartLevel(level))
 
         if (level > 0) {
             val cost = level * 50
@@ -326,6 +336,8 @@ class Gambit : AppCompatActivity() {
             )
         ).shuffled()
 
+        EventBus.post(StartLevel(level))
+
         combat = -1
         startCombat()
     }
@@ -334,8 +346,6 @@ class Gambit : AppCompatActivity() {
         combat++
 
         player.endCombat()
-
-        animateCards()
 
         if (combat < enemies.size) {
             enemy = enemies[combat]
@@ -352,12 +362,9 @@ class Gambit : AppCompatActivity() {
 
     private fun startRound() {
         round++
-        EventBus.post(StartRound(round))
-
         enemy.intend()
+        EventBus.post(StartRound(round))
         EventBus.post(ActionIntended(enemy.intent, enemy, player))
-
-        draw()
     }
 
     private fun act(action: Action) {
@@ -368,55 +375,37 @@ class Gambit : AppCompatActivity() {
         order.first.act()
         order.second.act()
 
-        animateCards()
-
-        enableButtons(false)
-        draw()
-
-        GlobalScope.launch {
-            delay(250)
-            runOnUiThread { endRound() }
-        }
+        endRound()
     }
 
     private fun endRound() {
         EventBus.post(FinishRound(round))
-        player.endRound()
-        enemy.endRound()
+        GlobalScope.launch {
+            delay(250)
+            runOnUiThread {
+                player.endRound()
+                enemy.endRound()
 
-        if (!enemy.alive()) {
-            EventBus.post(ActorDied(enemy))
-            EventBus.post(FinishCombat(combat))
-            defeated.add(enemy)
-            alert("defeated ${enemy.name}") { yesButton {} }.show()
-            startCombat()
-        } else if (!player.alive()) {
-            alert("""
-                |${enemy.name} defeated you
-                |ended on level $level, combat $combat, round $round
-                |ended with ${player.gold} gold
-                |defeated ${defeated.size} enemies:
-                |${defeated.joinToString(", ") { it.name }}
-            """.trimMargin()
-            ) { yesButton {} }.show()
-            startGame()
-        } else startRound()
-
-        animateCards()
-    }
-
-    private fun enableButtons(enabled: Boolean = true) {
-        defendButton.isEnabled = enabled
-        attackButton.isEnabled = enabled
-        stunButton.isEnabled = enabled
-        stealButton.isEnabled = enabled
-    }
-
-    private fun animateCards() {
-        defendCard.animate()
-        attackCard.animate()
-        stunCard.animate()
-        stealCard.animate()
+                if (!enemy.alive()) {
+                    defeated.add(enemy)
+                    EventBus.post(ActorDied(enemy))
+                    EventBus.post(FinishCombat(combat))
+                    alert("defeated ${enemy.name}") { yesButton {} }.show()
+                    startCombat()
+                } else if (!player.alive()) {
+                    alert(
+                        """
+                        |${enemy.name} defeated you
+                        |ended on level $level, combat $combat, round $round
+                        |ended with ${player.gold} gold
+                        |defeated ${defeated.size} enemies:
+                        |${defeated.joinToString(", ") { it.name }}
+                    """.trimMargin()
+                    ) { yesButton {} }.show()
+                    startGame()
+                } else startRound()
+            }
+        }
     }
 
     private fun draw() {
@@ -430,23 +419,23 @@ class Gambit : AppCompatActivity() {
         }
 
         enemyNameText.text = enemy.name
-        enemyActionText.text = "${enemy.intent.name} ${enemy.actionValue()}"
+        enemyActionText.text = "${enemy.intent.describeShort()}"
 
         defendText.text = """
-            |*block ${player.actionValue(defend)} damage
+            |*${player.defend.describe()}
             |*${defend.cooldown} turn cooldown
         """.trimMargin()
         attackText.text = """
-            |*deal ${player.actionValue(attack)} damage
+            |*${player.attack.describe()}
             |*damage increases with consecutive attacks
             |*${attack.cooldown} turn cooldown
         """.trimMargin()
         stunText.text = """
-            |*stun for ${player.actionValue(stun)} turn(s)
+            |*${player.stun.describe()}
             |*${stun.cooldown} turn cooldown
         """.trimMargin()
         stealText.text = """
-            |*steal ${player.actionValue(steal)} gold
+            |*${player.steal.describe()}
             |*${steal.cooldown} turn cooldown
         """.trimMargin()
 

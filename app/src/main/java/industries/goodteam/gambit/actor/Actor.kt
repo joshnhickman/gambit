@@ -73,12 +73,6 @@ open class Actor(
         }
     }
 
-    open fun defend(): Int {
-        val defenceValue = actionValue(Defend()).random()
-        shield += defenceValue
-        return defenceValue
-    }
-
     open fun damage(amount: Int): Int {
         var actualAmount = amount - shield
         if (actualAmount < 0) actualAmount = 0
@@ -134,16 +128,6 @@ open class Actor(
     open fun alive(): Boolean = health > 0
 
     open fun stunned(): Boolean = stunLeft > -1
-
-    // TODO: remove when actions handle this
-    fun actionValue(action: Action = intent): IntRange = when (action) {
-        is Attack -> (if (accuracy < strength) accuracy * attackMultiplier else strength * attackMultiplier)..strength * attackMultiplier
-        is Defend -> (if (reflexes < armor) reflexes else armor)..armor
-        is Stun -> concentration..concentration
-        is Steal -> accuracy * 10..reflexes * 10
-        is Nothing -> stunLeft..stunLeft
-        is Modify -> action.effect.value..action.effect.value
-    }
 
     override fun toString(): String = name
 
