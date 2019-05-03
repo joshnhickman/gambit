@@ -6,7 +6,7 @@ class AppliedEffect(
     val effect: Effect,
     val targetStat: Stat = effect.targetStat,
     val value: Int = effect.value,
-    val duration: Duration = effect.duration,
+    val duration: Int = effect.duration,
     var left: Int = duration
 ) {
 

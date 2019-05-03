@@ -14,7 +14,6 @@ import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.actor.Player
-import industries.goodteam.gambit.effect.Duration
 import industries.goodteam.gambit.effect.Effect
 import kotlinx.android.synthetic.main.combat.*
 import kotlinx.coroutines.GlobalScope
@@ -44,13 +43,7 @@ class Gambit : AppCompatActivity() {
         var combat = -1
         var round = -1
 
-        var events = mutableListOf<String>()
         var defeated = mutableListOf<Actor>()
-
-        fun addEvent(message: String) {
-            log.info("event: $message")
-            events.add(message)
-        }
 
         fun opponent(actor: Actor): Actor = if (actor == player) enemy else player
 
@@ -214,12 +207,27 @@ class Gambit : AppCompatActivity() {
             }.show()
         }
 
+        // animate pieces of the UI when certain events happen
+        EventBus.register(ActorDamaged::class.java) {
+            if (it is ActorDamaged) {
+                val damageText = if (it.target == player) playerDamageText else enemyDamageText
+                damageText.text = "${it.value}"
+                damageText.alpha = 1.0f
+                GlobalScope.launch {
+                    while (damageText.alpha > 0) {
+                        runOnUiThread { damageText.alpha -= 0.01f }
+                        delay(16)
+                    }
+                }
+            }
+        }
+
         startGame()
     }
 
     private fun startGame() {
-        addEvent("start game")
-        events.clear()
+        EventBus.post(StartGame())
+        EventBus.events.clear()
         defeated.clear()
 
         player = Player(
@@ -242,7 +250,7 @@ class Gambit : AppCompatActivity() {
 
     private fun startLevel() {
         level++
-        addEvent("start level $level")
+        EventBus.post(StartLevel(level))
 
         if (level > 0) {
             val cost = level * 50
@@ -313,7 +321,7 @@ class Gambit : AppCompatActivity() {
                 actions = *arrayOf(
                     Attack(cooldown = 0),
                     Defend(cooldown = 1),
-                    Modify(effect = Effect(Stat.STRENGTH, -2 - level, Duration(number = 2)), cooldown = 2)
+                    Modify(effect = Effect(Stat.STRENGTH, -2 - level, 2), cooldown = 2)
                 )
             )
         ).shuffled()
@@ -331,20 +339,23 @@ class Gambit : AppCompatActivity() {
 
         if (combat < enemies.size) {
             enemy = enemies[combat]
-            addEvent("encountered enemy ${enemy.name}")
-            addEvent("start combat $combat")
+            EventBus.post(EncounteredEnemy(enemy))
+            EventBus.post(StartCombat(combat))
 
             round = -1
             startRound()
-        } else startLevel()
+        } else {
+            EventBus.post(FinishLevel(level))
+            startLevel()
+        }
     }
 
     private fun startRound() {
         round++
-        addEvent("start round $round")
+        EventBus.post(StartRound(round))
 
         enemy.intend()
-        addEvent("${enemy.name} intends to ${enemy.intent.name} ${enemy.actionValue()}")
+        EventBus.post(ActionIntended(enemy.intent, enemy, player))
 
         draw()
     }
@@ -352,35 +363,10 @@ class Gambit : AppCompatActivity() {
     private fun act(action: Action) {
         player.intend(action)
 
-        val pair = if (player.intent.compareTo(enemy.intent) >= 0) player to enemy else enemy to player
+        val order = if (player.intent >= enemy.intent) player to enemy else enemy to player
 
-        val prevPlayerHealth = player.health
-        val prevEnemyHealth = enemy.health
-
-        pair.first.act()
-        pair.second.act()
-
-        // TODO: find a way to signal the UI better
-        if (prevPlayerHealth > player.health) {
-            playerDamageText.text = "${prevPlayerHealth - player.health}"
-            playerDamageText.alpha = 1.0f
-            GlobalScope.launch {
-                while (playerDamageText.alpha > 0) {
-                    runOnUiThread { playerDamageText.alpha -= 0.01f }
-                    delay(16)
-                }
-            }
-        }
-        if (prevEnemyHealth > enemy.health) {
-            enemyDamageText.text = "${prevEnemyHealth - enemy.health}"
-            enemyDamageText.alpha = 1.0f
-            GlobalScope.launch {
-                while (enemyDamageText.alpha > 0) {
-                    runOnUiThread { enemyDamageText.alpha -= 0.01f }
-                    delay(16)
-                }
-            }
-        }
+        order.first.act()
+        order.second.act()
 
         animateCards()
 
@@ -394,12 +380,13 @@ class Gambit : AppCompatActivity() {
     }
 
     private fun endRound() {
+        EventBus.post(FinishRound(round))
         player.endRound()
         enemy.endRound()
 
         if (!enemy.alive()) {
-            addEvent("${enemy.name} dies")
-            addEvent("++ end combat $combat ++")
+            EventBus.post(ActorDied(enemy))
+            EventBus.post(FinishCombat(combat))
             defeated.add(enemy)
             alert("defeated ${enemy.name}") { yesButton {} }.show()
             startCombat()
@@ -468,7 +455,7 @@ class Gambit : AppCompatActivity() {
 
         goldText.text = "GOLD: ${player.gold}"
 
-        eventsText.text = events.takeLast(10).joinToString("\n")
+        eventsText.text = EventBus.events.takeLast(10).joinToString("\n") { it.message }
 
         waitButton.visibility = if (player.stunned()) View.VISIBLE else View.GONE
     }

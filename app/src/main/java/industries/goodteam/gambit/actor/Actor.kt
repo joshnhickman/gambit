@@ -1,5 +1,7 @@
 package industries.goodteam.gambit.actor
 
+import industries.goodteam.gambit.ActorDamaged
+import industries.goodteam.gambit.EventBus
 import industries.goodteam.gambit.Stat
 import industries.goodteam.gambit.Stat.*
 import industries.goodteam.gambit.action.*
@@ -81,6 +83,7 @@ open class Actor(
         var actualAmount = amount - shield
         if (actualAmount < 0) actualAmount = 0
         if (health - actualAmount >= 0) health -= actualAmount else health = 0
+        EventBus.post(ActorDamaged(this, actualAmount))
         return actualAmount
     }
 
@@ -141,5 +144,7 @@ open class Actor(
         is Nothing -> stunLeft..stunLeft
         is Modify -> action.effect.value..action.effect.value
     }
+
+    override fun toString(): String = name
 
 }

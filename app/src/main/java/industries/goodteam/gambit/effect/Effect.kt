@@ -14,8 +14,6 @@ class Effect(
 //    constructor(targetStat: Stat = Stat.STRENGTH, value: Int = -1, duration: Int = 1)
 //            : this(targetStat, value, Duration(number = 1))
 
-    fun apply(target: Actor) {
-        target.
-    }
+    fun apply(): AppliedEffect = AppliedEffect(this)
 
 }
