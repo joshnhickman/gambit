@@ -13,8 +13,8 @@ object EventBus {
 
     fun register(vararg eventTypes: Class<out Event> = arrayOf(Event::class.java), test: (Event) -> Unit) {
         eventTypes.forEach { eventType ->
-            if (!listeners.containsKey(eventType)) listeners[eventType] = mutableListOf(test)
-            else listeners[eventType]?.add(test)
+            if (!listeners.containsKey(eventType)) listeners[eventType] = mutableListOf(function)
+            else listeners[eventType]?.add(function)
         }
     }
 
