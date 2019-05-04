@@ -1,8 +1,10 @@
 package industries.goodteam.gambit.action
 
-import industries.goodteam.gambit.*
+import industries.goodteam.gambit.Gambit
+import industries.goodteam.gambit.Stat
 import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.effect.Effect
+import industries.goodteam.gambit.event.*
 
 sealed class Action(val name: String, val target: Target = Target.OPPONENT, var cooldown: Int, start: Int = -1) :
     Comparable<Action> {
@@ -27,8 +29,7 @@ sealed class Action(val name: String, val target: Target = Target.OPPONENT, var 
         }
     }
 
-    open fun act() {}
-
+    abstract fun act()
     abstract fun describe(): String
     abstract fun describeShort(): String
 
@@ -48,7 +49,7 @@ sealed class Action(val name: String, val target: Target = Target.OPPONENT, var 
     override fun toString(): String = name
 }
 
-class Nothing : Action(name = "nothing", target = Target.SELF, cooldown = -1) {
+class Nothing : Action(name = "nothing", target = Target.SELF, cooldown = 0) {
     override val priority = 99
 
     override fun act() {
@@ -60,7 +61,7 @@ class Nothing : Action(name = "nothing", target = Target.SELF, cooldown = -1) {
 
 }
 
-class Stun(name: String = "stun", cooldown: Int = 3, start: Int = -1) :
+class Stun(name: String = "stun", cooldown: Int = 0, start: Int = -1) :
     Action(name = name, cooldown = cooldown, start = start) {
     override val priority = 1
 
@@ -82,7 +83,7 @@ class Stun(name: String = "stun", cooldown: Int = 3, start: Int = -1) :
     override fun describeShort(): String = "stun ${actor.stat(stat)}"
 }
 
-class Modify(name: String = "modify", val effect: Effect, cooldown: Int = 3, start: Int = -1) :
+class Modify(name: String = "modify", val effect: Effect, cooldown: Int = 0, start: Int = -1) :
     Action(name = name, cooldown = cooldown, start = start) {
     override val priority = 2
 
@@ -102,7 +103,7 @@ class Modify(name: String = "modify", val effect: Effect, cooldown: Int = 3, sta
     override fun describeShort(): String = "modify ${effect.targetStat} ${effect.value}"
 }
 
-class Defend(name: String = "defend", cooldown: Int = 1, start: Int = -1) :
+class Defend(name: String = "defend", cooldown: Int = 0, start: Int = -1) :
     Action(name = name, target = Target.SELF, cooldown = cooldown, start = start) {
 
     override val priority = 3

@@ -1,16 +1,18 @@
 package industries.goodteam.gambit.actor
 
-import industries.goodteam.gambit.ActorDamaged
-import industries.goodteam.gambit.EventBus
-import industries.goodteam.gambit.FinishRound
 import industries.goodteam.gambit.Stat
 import industries.goodteam.gambit.Stat.*
+import industries.goodteam.gambit.Strategy
 import industries.goodteam.gambit.action.Action
 import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.effect.AppliedEffect
+import industries.goodteam.gambit.event.ActorDamaged
+import industries.goodteam.gambit.event.EventBus
+import industries.goodteam.gambit.event.FinishRound
 
 open class Actor(
-    var name: String,
+    val name: String,
+    val strategy: Strategy = Strategy.RANDOM,
     var luck: Int = 1,
     var vitality: Int = 30,
     var strength: Int = 5,
@@ -22,6 +24,9 @@ open class Actor(
 ) {
 
     val nothing = Nothing()
+
+    // pointer to keep track of current action for sequential strategy
+    var actionPointer = -1
 
     init {
         actions.forEach { it.actor = this }
@@ -51,6 +56,7 @@ open class Actor(
                 if (it.done()) modifyStat(it.targetStat, -it.value)
                 it.done()
             }
+            if (stunned()) stunLeft--
         }
     }
 
@@ -65,7 +71,16 @@ open class Actor(
         intent = when {
             stunned() -> nothing
             action != null -> action
-            else -> actions.filter { it.ready() }.random()
+            else -> {
+                when (strategy) {
+                    Strategy.RANDOM -> actions.filter { it.ready() }.random()
+                    Strategy.SEQUENTIAL -> {
+                        actionPointer++
+                        if (actionPointer >= actions.size) actionPointer = 0
+                        actions[actionPointer]
+                    }
+                }
+            }
         }
     }
 

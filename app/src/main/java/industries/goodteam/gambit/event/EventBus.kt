@@ -1,4 +1,4 @@
-package industries.goodteam.gambit
+package industries.goodteam.gambit.event
 
 import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.info

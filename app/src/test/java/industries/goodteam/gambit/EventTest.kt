@@ -1,5 +1,6 @@
 package industries.goodteam.gambit
 
+import industries.goodteam.gambit.event.StartCombat
 import junit.framework.Assert.assertEquals
 import org.junit.Test
 
