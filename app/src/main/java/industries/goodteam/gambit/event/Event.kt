@@ -1,11 +1,16 @@
 package industries.goodteam.gambit.event
 
+import industries.goodteam.gambit.Gambit
 import industries.goodteam.gambit.Gambit.Companion.level
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.actor.Actor
 
 sealed class Event(val message: String) {
+    val level = Gambit.level
+    val combat = Gambit.combat
+    val round = Gambit.round
+
     override fun toString(): String = message
 }
 

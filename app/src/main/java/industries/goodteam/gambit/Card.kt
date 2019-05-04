@@ -5,8 +5,11 @@ import android.widget.Button
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.Guideline
 import industries.goodteam.gambit.action.Action
-import industries.goodteam.gambit.event.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.jetbrains.anko.AnkoLogger
 import kotlin.math.absoluteValue
 
 class Card(
@@ -15,6 +18,8 @@ class Card(
     val guideline: Guideline,
     val button: Button
 ) {
+
+    private val log = AnkoLogger(this::class.java)
 
     companion object {
         const val delayMillis = 16L
@@ -27,33 +32,21 @@ class Card(
     }
 
     init {
-        EventBus.register(
-            StartCombat::class.java,
-            StartRound::class.java,
-            FinishRound::class.java,
-            ActionPerformed::class.java
-        ) {
-            if (it is ActionPerformed && it.action == action) animate()
-            else if (it !is ActionPerformed) animate()
-        }
+        animate()
     }
 
     private var animation: Job? = null
 
     private fun animate() {
-        ctx.runOnUiThread { button.isEnabled = action.ready() }
-        var percent: Float = (guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
-        var targetPercent = if (action.ready()) top else minOf(top + step * (action.left + 1), bottom)
-
-        GlobalScope.launch { animation?.join() }
         animation = GlobalScope.launch {
-            withTimeout(250) {
-                while (percent != targetPercent) {
-                    if (percent < targetPercent) percent += frame else if (percent > targetPercent) percent -= frame
-                    if ((targetPercent - percent).absoluteValue < frame) percent = targetPercent
-                    ctx.runOnUiThread { guideline.setGuidelinePercent(percent) }
-                    delay(delayMillis)
-                }
+            while (true) {
+                val currentPercent: Float = (guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
+                val targetPercent = if (action.ready()) top else minOf(top + step * (action.left + 1), bottom)
+                var percent = currentPercent
+                if (percent < targetPercent) percent += frame else if (percent > targetPercent) percent -= frame
+                if ((targetPercent - percent).absoluteValue < frame) percent = targetPercent
+                ctx.runOnUiThread { guideline.setGuidelinePercent(percent) }
+                delay(delayMillis)
             }
         }
     }

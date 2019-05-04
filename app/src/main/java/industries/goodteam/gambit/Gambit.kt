@@ -209,6 +209,7 @@ class Gambit : AppCompatActivity() {
         }
 
         // animate pieces of the UI when certain events happen
+        // ui listeners always return true since they are always needed
         EventBus.register(ActorDamaged::class.java) {
             if (it is ActorDamaged) {
                 val damageText = if (it.target == player) playerDamageText else enemyDamageText
@@ -221,14 +222,28 @@ class Gambit : AppCompatActivity() {
                     }
                 }
             }
+            true
         }
         EventBus.register(FinishRound::class.java) {
             defendButton.isEnabled = false
             attackButton.isEnabled = false
             stunButton.isEnabled = false
             stealButton.isEnabled = false
+            waitButton.visibility = View.GONE
+            true
         }
-        EventBus.register { if (it !is StartGame && it !is StartLevel) draw() }
+        EventBus.register(StartRound::class.java) {
+            defendButton.isEnabled = defend.ready()
+            attackButton.isEnabled = attack.ready()
+            stunButton.isEnabled = stun.ready()
+            stealButton.isEnabled = steal.ready()
+            waitButton.visibility = if (player.stunned()) View.VISIBLE else View.GONE
+            true
+        }
+        EventBus.register {
+            if (it !is StartGame && it !is StartLevel) draw()
+            true
+        }
 
         startGame()
     }
@@ -359,15 +374,10 @@ class Gambit : AppCompatActivity() {
 
     private fun startRound() {
         round++
-        enemy.intend()
         EventBus.post(StartRound(round))
-        EventBus.post(
-            ActionIntended(
-                enemy.intent,
-                enemy,
-                player
-            )
-        )
+
+        enemy.intend()
+        EventBus.post(ActionIntended(enemy.intent, enemy, player))
     }
 
     private fun act(action: Action) {
@@ -444,9 +454,9 @@ class Gambit : AppCompatActivity() {
 
         goldText.text = "GOLD: ${player.gold}"
 
-        eventsText.text = EventBus.events.takeLast(10).joinToString("\n") { it.message }
-
-        waitButton.visibility = if (player.stunned()) View.VISIBLE else View.GONE
+        eventsText.text = "last round:\n" +
+                EventBus.eventsFrom(level - 1, combat - 1, Gambit.round - 1)
+                    .joinToString("\n") { it.message }
     }
 
     // helper method to automatically set text as it's edited

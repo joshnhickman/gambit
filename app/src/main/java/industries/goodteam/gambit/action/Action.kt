@@ -3,6 +3,7 @@ package industries.goodteam.gambit.action
 import industries.goodteam.gambit.Gambit
 import industries.goodteam.gambit.Stat
 import industries.goodteam.gambit.actor.Actor
+import industries.goodteam.gambit.actor.Player
 import industries.goodteam.gambit.effect.Effect
 import industries.goodteam.gambit.event.*
 
@@ -15,8 +16,14 @@ sealed class Action(val name: String, val target: Target = Target.OPPONENT, var 
     var left = start
 
     init {
-        EventBus.register(FinishRound::class.java) { if (!ready()) left-- }
-        EventBus.register(FinishCombat::class.java) { left = -1 }
+        EventBus.register(StartRound::class.java) {
+            if (!ready()) left--
+            actor.alive()
+        }
+        EventBus.register(StartCombat::class.java) {
+            left = -1
+            actor.alive()
+        }
     }
 
     fun ready(): Boolean = left < 0
@@ -114,19 +121,14 @@ class Defend(name: String = "defend", cooldown: Int = 0, start: Int = -1) :
     override fun act() {
         val amount = range(from, to).random()
         target().shield += amount
-        EventBus.post(
-            ActorDefended(
-                this,
-                actor,
-                amount
-            )
-        )
+        EventBus.post(ActorDefended(this, actor, amount))
     }
 
     override fun describe(): String = "defend ${range(from, to)} damage"
     override fun describeShort(): String = "defend ${range(from, to)}"
 }
 
+// TODO: contains temporary workarounds for player attack multiplier
 class Attack(name: String = "attack", cooldown: Int = 0, start: Int = -1) :
     Action(name = name, cooldown = cooldown, start = start) {
 
@@ -136,19 +138,21 @@ class Attack(name: String = "attack", cooldown: Int = 0, start: Int = -1) :
     private val to = Stat.STRENGTH
 
     override fun act() {
-        val amount = range(Stat.ACCURACY, Stat.STRENGTH).random()
-        EventBus.post(
-            ActorAttacked(
-                this,
-                actor,
-                amount
-            )
-        )
+        var amount = range(Stat.ACCURACY, Stat.STRENGTH).random()
+        if (actor is Player) amount = range(from, to, actor.attackMultiplier).random()
+        EventBus.post(ActorAttacked(this, actor, amount))
         target().damage(amount)
     }
 
-    override fun describe(): String = "attack for ${range(from, to)} damage"
-    override fun describeShort(): String = "attack ${range(from, to)}"
+    override fun describe(): String {
+        return if (actor is Player) "attack for ${range(from, to, actor.attackMultiplier)}"
+        else "attack for ${range(from, to)} damage"
+    }
+
+    override fun describeShort(): String {
+        return if (actor is Player) "attack ${range(from, to, actor.attackMultiplier)}"
+        else "attack ${range(from, to)}"
+    }
 
 }
 

@@ -26,6 +26,12 @@ class Player(
     actions = *arrayOf(attack, defend, stun, steal)
 ) {
 
+    // temporary until multiplier is turned into an effect so that actor can be final
+    init {
+        actions.forEach { it.actor = this }
+        nothing.actor = this
+    }
+
     override fun act(action: Action) {
         super.act(action)
         if (action is Attack) {

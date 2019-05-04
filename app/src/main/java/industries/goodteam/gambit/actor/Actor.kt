@@ -8,8 +8,9 @@ import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.effect.AppliedEffect
 import industries.goodteam.gambit.event.ActorDamaged
 import industries.goodteam.gambit.event.EventBus
-import industries.goodteam.gambit.event.FinishRound
+import industries.goodteam.gambit.event.StartRound
 
+// TODO: make actor final
 open class Actor(
     val name: String,
     val strategy: Strategy = Strategy.RANDOM,
@@ -28,6 +29,8 @@ open class Actor(
     // pointer to keep track of current action for sequential strategy
     var actionPointer = -1
 
+    // TODO: figure out a better way to give the action a handle to the actor
+    // if an action is created outside of an actor, it will break due to the lateinit property
     init {
         actions.forEach { it.actor = this }
         nothing.actor = this
@@ -48,7 +51,7 @@ open class Actor(
     var acted = false
 
     init {
-        EventBus.register(FinishRound::class.java) {
+        EventBus.register(StartRound::class.java) {
             shield = 0
             acted = false
             effects.removeAll {
@@ -57,6 +60,7 @@ open class Actor(
                 it.done()
             }
             if (stunned()) stunLeft--
+            alive() // only living actors should continue listening
         }
     }
 
@@ -102,7 +106,7 @@ open class Actor(
     open fun stun(duration: Int): Int {
         stunLeft = duration
         actions.forEach { it.left = stunLeft }
-        intend(Nothing())
+        intend(nothing)
         return duration
     }
 
