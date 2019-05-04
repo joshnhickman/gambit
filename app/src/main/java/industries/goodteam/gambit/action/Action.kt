@@ -15,14 +15,12 @@ sealed class Action(val name: String, val target: Target = Target.OPPONENT, var 
     lateinit var actor: Actor
     var left = start
 
-    init {
-        EventBus.register(StartRound::class.java) {
+    fun activate() {
+        EventBus.register(StartRound::class.java, retain = { actor.alive() }) {
             if (!ready()) left--
-            actor.alive()
         }
-        EventBus.register(StartCombat::class.java) {
+        EventBus.register(StartCombat::class.java, retain = { actor.alive() }) {
             left = -1
-            actor.alive()
         }
     }
 

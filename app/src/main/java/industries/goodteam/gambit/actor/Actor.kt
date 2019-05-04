@@ -50,18 +50,18 @@ open class Actor(
 
     var acted = false
 
-    init {
-        EventBus.register(StartRound::class.java) {
+    fun activate() {
+        EventBus.register(StartRound::class.java, retain = { alive() }) {
             shield = 0
             acted = false
-            effects.removeAll {
-                it.update()
-                if (it.done()) modifyStat(it.targetStat, -it.value)
-                it.done()
+            effects.removeAll { effect ->
+                effect.update()
+                if (effect.done()) modifyStat(effect.targetStat, -effect.value)
+                effect.done()
             }
             if (stunned()) stunLeft--
-            alive() // only living actors should continue listening
         }
+        actions.forEach { action -> action.activate() }
     }
 
     open fun act(action: Action = intent) {

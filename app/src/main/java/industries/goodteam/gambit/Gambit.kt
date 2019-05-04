@@ -209,8 +209,7 @@ class Gambit : AppCompatActivity() {
         }
 
         // animate pieces of the UI when certain events happen
-        // ui listeners always return true since they are always needed
-        EventBus.register(ActorDamaged::class.java) {
+        EventBus.registerUI(ActorDamaged::class.java) {
             if (it is ActorDamaged) {
                 val damageText = if (it.target == player) playerDamageText else enemyDamageText
                 damageText.text = "${it.value}"
@@ -222,35 +221,30 @@ class Gambit : AppCompatActivity() {
                     }
                 }
             }
-            true
         }
-        EventBus.register(FinishRound::class.java) {
+        EventBus.registerUI(FinishRound::class.java) {
             defendButton.isEnabled = false
             attackButton.isEnabled = false
             stunButton.isEnabled = false
             stealButton.isEnabled = false
             waitButton.visibility = View.GONE
-            true
         }
-        EventBus.register(StartRound::class.java) {
+        EventBus.registerUI(StartRound::class.java) {
             defendButton.isEnabled = defend.ready()
             attackButton.isEnabled = attack.ready()
             stunButton.isEnabled = stun.ready()
             stealButton.isEnabled = steal.ready()
             waitButton.visibility = if (player.stunned()) View.VISIBLE else View.GONE
-            true
         }
-        EventBus.register {
+        EventBus.registerUI {
             if (it !is StartGame && it !is StartLevel) draw()
-            true
         }
 
         startGame()
     }
 
-    // TODO: need to clear all listeners without losing ui pieces
     private fun startGame() {
-        EventBus.events.clear()
+        EventBus.clear()
         defeated.clear()
 
         player = Player(
@@ -266,6 +260,7 @@ class Gambit : AppCompatActivity() {
             stun = stun,
             steal = steal
         )
+        player.activate()
 
         EventBus.post(StartGame())
 
@@ -361,6 +356,7 @@ class Gambit : AppCompatActivity() {
 
         if (combat < enemies.size) {
             enemy = enemies[combat]
+            enemy.activate()
             EventBus.post(EncounteredEnemy(enemy))
             EventBus.post(StartCombat(combat))
 
@@ -455,7 +451,7 @@ class Gambit : AppCompatActivity() {
         goldText.text = "GOLD: ${player.gold}"
 
         eventsText.text = "last round:\n" +
-                EventBus.eventsFrom(level - 1, combat - 1, Gambit.round - 1)
+                EventBus.eventsFrom(level - 1, combat - 1, round - 1)
                     .joinToString("\n") { it.message }
     }
 
