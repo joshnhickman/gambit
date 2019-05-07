@@ -69,7 +69,7 @@ object EventBus {
     fun eventsFrom(level: Int, combat: Int, round: Int): List<Event> {
         val l = if (level < 0) 0 else level
         val c = if (combat < 0) 0 else combat
-        return if (round < 0) listOf() else events.filter { it.level == l && it.combat == l && it.round == round }
+        return if (round < 0) listOf() else events.filter { it.level == l && it.combat == c && it.round == round }
     }
 
 }

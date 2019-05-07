@@ -26,9 +26,9 @@ import org.jetbrains.anko.sdk27.coroutines.onClick
 @SuppressLint("SetTextI18n") // ignore warnings for setting strings outside of resources
 class Gambit : AppCompatActivity() {
 
-    companion object {
+    private val log = AnkoLogger(this::class.java)
 
-        private val log = AnkoLogger(this::class.java)
+    companion object {
 
         val attack = Attack(cooldown = 0)
         val defend = Defend(cooldown = 1)
@@ -451,7 +451,7 @@ class Gambit : AppCompatActivity() {
         goldText.text = "GOLD: ${player.gold}"
 
         eventsText.text = "last round:\n" +
-                EventBus.eventsFrom(level - 1, combat - 1, round - 1)
+                EventBus.eventsFrom(level, combat, round - 1)
                     .joinToString("\n") { it.message }
     }
 

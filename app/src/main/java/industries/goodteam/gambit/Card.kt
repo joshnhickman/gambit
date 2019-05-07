@@ -5,21 +5,21 @@ import android.widget.Button
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.Guideline
 import industries.goodteam.gambit.action.Action
+import industries.goodteam.gambit.event.EventBus
+import industries.goodteam.gambit.event.FinishRound
+import industries.goodteam.gambit.event.StartRound
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.anko.AnkoLogger
 import kotlin.math.absoluteValue
 
 class Card(
-    val ctx: Activity,
-    val action: Action,
-    val guideline: Guideline,
+    private val ctx: Activity,
+    private val action: Action,
+    private val guideline: Guideline,
     val button: Button
 ) {
-
-    private val log = AnkoLogger(this::class.java)
 
     companion object {
         const val delayMillis = 16L
@@ -32,21 +32,23 @@ class Card(
     }
 
     init {
-        animate()
+        EventBus.registerUI(StartRound::class.java, FinishRound::class.java) { animate() }
     }
 
     private var animation: Job? = null
 
     private fun animate() {
-        animation = GlobalScope.launch {
-            while (true) {
-                val currentPercent: Float = (guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
-                val targetPercent = if (action.ready()) top else minOf(top + step * (action.left + 1), bottom)
-                var percent = currentPercent
-                if (percent < targetPercent) percent += frame else if (percent > targetPercent) percent -= frame
-                if ((targetPercent - percent).absoluteValue < frame) percent = targetPercent
-                ctx.runOnUiThread { guideline.setGuidelinePercent(percent) }
-                delay(delayMillis)
+        val targetPercent = if (action.ready()) top else minOf(top + step * (action.left + 1), bottom)
+        if ((guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent != targetPercent) {
+            animation?.cancel()
+            animation = GlobalScope.launch {
+                while (true) {
+                    var percent = (guideline.layoutParams as ConstraintLayout.LayoutParams).guidePercent
+                    if (percent < targetPercent) percent += frame else if (percent > targetPercent) percent -= frame
+                    if ((targetPercent - percent).absoluteValue < frame) percent = targetPercent
+                    ctx.runOnUiThread { guideline.setGuidelinePercent(percent) }
+                    delay(delayMillis)
+                }
             }
         }
     }
