@@ -30,7 +30,6 @@ class Gambit : AppCompatActivity() {
     private val log = AnkoLogger(this::class.java)
 
     companion object {
-
         val attack = Attack(cooldown = 0)
         val defend = Defend(cooldown = 1)
         val stun = Stun(cooldown = 3)
@@ -47,8 +46,9 @@ class Gambit : AppCompatActivity() {
 
         var defeated = mutableListOf<Actor>()
 
-        fun opponent(actor: Actor): Actor = if (actor == player) enemy else player
+        var relics = mutableListOf<Relic>()
 
+        fun opponent(actor: Actor): Actor = if (actor == player) enemy else player
     }
 
     private lateinit var defendCard: Card
@@ -203,6 +203,12 @@ class Gambit : AppCompatActivity() {
                         editStats("eArmor", enemy.armor, "") { enemy.armor = it }
                         editStats("eReflexes", enemy.reflexes, "") { enemy.reflexes = it }
                         editStats("eConcentration", enemy.concentration, "") { enemy.concentration = it }
+
+                        button("give spikes") {
+                            onClick {
+                                player.newRelic(Relic("spikes", "", listOf(Retaliate(3))))
+                            }
+                        }
                     }
                 }
                 yesButton { toast("saved") }
@@ -273,11 +279,20 @@ class Gambit : AppCompatActivity() {
         level++
 
         if (level > 0) {
+            alert("purchase spikes for 25 gold?") {
+                if (player.gold >= 25) {
+                    yesButton {
+                        player.gold -= 25
+                        player.newRelic(Relic("spikes", "", listOf(Retaliate(3))))
+                        draw()
+                    }
+                }
+            }
             val cost = level * 50
             alert("heal ${player.vitality / 2} health for $cost gold?") {
                 if (player.gold >= cost) {
                     yesButton {
-                        player.gold -= level * 50
+                        player.gold -= cost
                         player.heal(player.vitality / 2)
                         draw()
                     }
@@ -345,7 +360,7 @@ class Gambit : AppCompatActivity() {
                 )
             ),
             Actor(
-                name = "retaliator",
+                name = "retaliater",
                 luck = 1,
                 vitality = 30 + 5 * level,
                 strength = 5 + level,
@@ -354,9 +369,13 @@ class Gambit : AppCompatActivity() {
                 reflexes = 2 + level,
                 concentration = 0 + level,
                 actions = listOf(Attack(cooldown = 0), Defend(cooldown = 1)),
-                properties = listOf(Retaliate(1 + 2 * level))
+                relics = mutableListOf(Relic("spikes", "", listOf(Retaliate(1 + 2 * level))))
             )
         ).shuffled()
+
+        relics = mutableListOf(
+            Relic("spikes", "ouch", listOf(Retaliate(4)))
+        )
 
         EventBus.post(StartLevel(level))
 
@@ -428,6 +447,7 @@ class Gambit : AppCompatActivity() {
     }
 
     private fun draw() {
+        relicsText.text = player.relics.joinToString(",") { it.name }
         playerHealthBar.apply {
             max = player.vitality
             progress = player.health
@@ -439,8 +459,10 @@ class Gambit : AppCompatActivity() {
 
         enemyNameText.text = enemy.name
         var actionText = enemy.intent.describeShort()
-        for (property in enemy.properties) {
-            actionText += "\n${property.describeShort()}"
+        for (relic in enemy.relics) {
+            for (property in relic.properties) {
+                actionText += "\n${property.describeShort()}"
+            }
         }
         enemyActionText.text = actionText
 

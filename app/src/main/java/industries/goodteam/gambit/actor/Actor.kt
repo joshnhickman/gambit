@@ -1,5 +1,6 @@
 package industries.goodteam.gambit.actor
 
+import industries.goodteam.gambit.Relic
 import industries.goodteam.gambit.Stat
 import industries.goodteam.gambit.Stat.*
 import industries.goodteam.gambit.Strategy
@@ -23,7 +24,7 @@ open class Actor(
     var reflexes: Int = 1,
     var concentration: Int = 1,
     var actions: List<Action>,
-    var properties: List<Property> = emptyList()
+    var relics: MutableList<Relic> = mutableListOf()
 ) {
 
     val nothing = Nothing()
@@ -65,19 +66,7 @@ open class Actor(
         }
         actions.forEach { action -> action.activate() }
 
-        for (property in properties) {
-            when (property) {
-                is Retaliate -> {
-                    EventBus.register(ActionPerformed::class.java, retain = { alive() }) {
-                        if (it is ActionPerformed && it.action is Attack && it.target == this) {
-                            EventBus.post(PropertyTriggered(this, property))
-                            it.actor.damage(property.value)
-                        }
-                    }
-                }
-            }
-
-        }
+        relics.forEach { registerProperties(it.properties) }
     }
 
     open fun act(action: Action = intent) {
@@ -156,9 +145,30 @@ open class Actor(
         CONCENTRATION -> concentration
     }
 
+    fun newRelic(relic: Relic) {
+        relics.add(relic)
+        registerProperties(relic.properties)
+    }
+
     open fun alive(): Boolean = health > 0
 
     open fun stunned(): Boolean = stunLeft > -1
+
+    private fun registerProperties(properties: List<Property>) {
+        for (property in properties) {
+            // TODO: move this logic into properties?
+            when (property) {
+                is Retaliate -> {
+                    EventBus.register(ActionPerformed::class.java, retain = { alive() }) {
+                        if (it is ActionPerformed && it.action is Attack && it.target == this) {
+                            EventBus.post(PropertyTriggered(this, property))
+                            it.actor.damage(property.value)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     override fun toString(): String = name
 
