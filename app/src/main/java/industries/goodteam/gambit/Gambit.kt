@@ -219,13 +219,14 @@ class Gambit : AppCompatActivity() {
         EventBus.registerUI(ActorDamaged::class.java) {
             if (it is ActorDamaged) {
                 val damageText = if (it.target == player) playerDamageText else enemyDamageText
-                damageText.text = "${it.value}"
+                damageText.text = "${damageText.text.toString().toInt() + it.value}"
                 damageText.alpha = 1.0f
                 GlobalScope.launch {
                     while (damageText.alpha > 0) {
                         runOnUiThread { damageText.alpha -= 0.01f }
                         delay(16)
                     }
+                    damageText.text = "0"
                 }
             }
         }
