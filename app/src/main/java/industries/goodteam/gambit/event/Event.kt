@@ -5,6 +5,7 @@ import industries.goodteam.gambit.Gambit.Companion.level
 import industries.goodteam.gambit.action.*
 import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.actor.Actor
+import industries.goodteam.gambit.property.Property
 
 sealed class Event(val message: String) {
     val level = Gambit.level
@@ -55,3 +56,5 @@ data class ActorDamaged(val target: Actor, val value: Int) :
     Event("${target.name} took $value damage")
 
 data class ActorDied(val actor: Actor) : Event("${actor.name} died")
+
+data class PropertyTriggered(val actor: Actor, val property: Property) : Event("${actor.name} ${property.describe()}")

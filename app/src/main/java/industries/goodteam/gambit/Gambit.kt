@@ -16,6 +16,7 @@ import industries.goodteam.gambit.actor.Actor
 import industries.goodteam.gambit.actor.Player
 import industries.goodteam.gambit.effect.Effect
 import industries.goodteam.gambit.event.*
+import industries.goodteam.gambit.property.Retaliate
 import kotlinx.android.synthetic.main.combat.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -295,7 +296,7 @@ class Gambit : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(cooldown = 0), Defend(cooldown = 1))
+                actions = listOf(Attack(cooldown = 0), Defend(cooldown = 1))
             ),
             Actor(
                 name = "defender",
@@ -305,7 +306,7 @@ class Gambit : AppCompatActivity() {
                 accuracy = 3 + level,
                 armor = 20 + level,
                 reflexes = 5 + level,
-                actions = *arrayOf(Attack(cooldown = 1, start = 1), Defend(cooldown = 0))
+                actions = listOf(Attack(cooldown = 1, start = 1), Defend(cooldown = 0))
             ),
             Actor(
                 name = "stunner",
@@ -316,7 +317,7 @@ class Gambit : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(Attack(cooldown = 0), Stun(cooldown = 4, start = 2))
+                actions = listOf(Attack(cooldown = 0), Stun(cooldown = 4, start = 2))
             ),
             Actor(
                 name = "damager",
@@ -326,7 +327,7 @@ class Gambit : AppCompatActivity() {
                 accuracy = 15 + level,
                 armor = 5 + level,
                 reflexes = 2 + level,
-                actions = *arrayOf(Attack(cooldown = 4, start = 4), Defend(cooldown = 0))
+                actions = listOf(Attack(cooldown = 4, start = 4), Defend(cooldown = 0))
             ),
             Actor(
                 name = "weakener",
@@ -337,11 +338,23 @@ class Gambit : AppCompatActivity() {
                 armor = 5 + level,
                 reflexes = 2 + level,
                 concentration = 0 + level,
-                actions = *arrayOf(
+                actions = listOf(
                     Attack(cooldown = 0),
                     Defend(cooldown = 1),
                     Modify(effect = Effect(Stat.STRENGTH, -2 - level, 2), cooldown = 2)
                 )
+            ),
+            Actor(
+                name = "retaliator",
+                luck = 1,
+                vitality = 30 + 5 * level,
+                strength = 5 + level,
+                accuracy = 3 + level,
+                armor = 5 + level,
+                reflexes = 2 + level,
+                concentration = 0 + level,
+                actions = listOf(Attack(cooldown = 0), Defend(cooldown = 1)),
+                properties = listOf(Retaliate(1 + 2 * level))
             )
         ).shuffled()
 
@@ -425,7 +438,11 @@ class Gambit : AppCompatActivity() {
         }
 
         enemyNameText.text = enemy.name
-        enemyActionText.text = enemy.intent.describeShort()
+        var actionText = enemy.intent.describeShort()
+        for (property in enemy.properties) {
+            actionText += "\n${property.describeShort()}"
+        }
+        enemyActionText.text = actionText
 
         defendText.text = """
             |*${player.defend.describe()}

@@ -4,11 +4,12 @@ import industries.goodteam.gambit.Stat
 import industries.goodteam.gambit.Stat.*
 import industries.goodteam.gambit.Strategy
 import industries.goodteam.gambit.action.Action
+import industries.goodteam.gambit.action.Attack
 import industries.goodteam.gambit.action.Nothing
 import industries.goodteam.gambit.effect.AppliedEffect
-import industries.goodteam.gambit.event.ActorDamaged
-import industries.goodteam.gambit.event.EventBus
-import industries.goodteam.gambit.event.StartRound
+import industries.goodteam.gambit.event.*
+import industries.goodteam.gambit.property.Property
+import industries.goodteam.gambit.property.Retaliate
 
 // TODO: make actor final
 open class Actor(
@@ -21,7 +22,8 @@ open class Actor(
     var armor: Int = 5,
     var reflexes: Int = 1,
     var concentration: Int = 1,
-    vararg var actions: Action
+    var actions: List<Action>,
+    var properties: List<Property> = emptyList()
 ) {
 
     val nothing = Nothing()
@@ -62,6 +64,20 @@ open class Actor(
             if (stunned()) stunLeft--
         }
         actions.forEach { action -> action.activate() }
+
+        for (property in properties) {
+            when (property) {
+                is Retaliate -> {
+                    EventBus.register(ActionPerformed::class.java, retain = { alive() }) {
+                        if (it is ActionPerformed && it.action is Attack && it.target == this) {
+                            EventBus.post(PropertyTriggered(this, property))
+                            it.actor.damage(property.value)
+                        }
+                    }
+                }
+            }
+
+        }
     }
 
     open fun act(action: Action = intent) {

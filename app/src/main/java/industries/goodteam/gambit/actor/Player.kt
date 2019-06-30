@@ -23,7 +23,7 @@ class Player(
     armor = armor,
     reflexes = reflexes,
     concentration = concentration,
-    actions = *arrayOf(attack, defend, stun, steal)
+    actions = listOf(attack, defend, stun, steal)
 ) {
 
     // temporary until multiplier is turned into an effect so that actor can be final
